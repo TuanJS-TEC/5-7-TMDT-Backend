@@ -1,0 +1,48 @@
+{
+  "name": "car-marketplace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Car marketplace — microservices monorepo (NestJS + CQRS)",
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
+  "scripts": {
+    "build:libs": "npm run build -w @car-marketplace/common -w @car-marketplace/database -w @car-marketplace/messaging",
+    "build:apps": "npm run build -w api-gateway -w auth-service -w listing-service -w payment-service -w user-service -w notification-service -w admin-service -w search-service",
+    "build": "npm run build:libs && npm run build:apps",
+    "build:gateway": "npm run build -w api-gateway",
+    "build:listing": "npm run build:libs && npm run build -w listing-service",
+    "start:gateway": "npm run start:dev -w api-gateway",
+    "start:listing": "npm run start:dev -w listing-service"
+  },
+  "dependencies": {
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/cqrs": "^11.0.1",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/microservices": "^11.0.1",
+    "@nestjs/passport": "^11.0.0",
+    "@nestjs/typeorm": "^11.0.0",
+    "amqp-connection-manager": "^4.1.14",
+    "amqplib": "^0.10.5",
+    "bcryptjs": "^2.4.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "ioredis": "^5.4.2",
+    "passport-jwt": "^4.0.1",
+    "pg": "^8.13.1",
+    "redis": "^4.7.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.21",
+    "uuid": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.6",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/pg": "^8.11.10"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
