@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ListingOrmEntity } from './infrastructure/persistence/typeorm/listing.orm.entity';
 import { ListingController } from './presentation/controllers/listing.controller';
 import { CreateListingHandler } from './application/commands/create-listing/create-listing.handler';
 import { UpdateListingHandler } from './application/commands/update-listing/update-listing.handler';
@@ -29,8 +31,13 @@ const queryHandlers = [
 ];
 const eventHandlers = [ListingCreatedHandler, ListingApprovedHandler];
 
+const typeOrmListing =
+  process.env.SKIP_DATABASE === 'true'
+    ? []
+    : [TypeOrmModule.forFeature([ListingOrmEntity])];
+
 @Module({
-  imports: [CqrsModule],
+  imports: [CqrsModule, ...typeOrmListing],
   controllers: [ListingController],
   providers: [
     {
