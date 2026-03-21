@@ -14,7 +14,9 @@
     "build:gateway": "npm run build -w api-gateway",
     "build:listing": "npm run build:libs && npm run build -w listing-service",
     "start:gateway": "npm run start:dev -w api-gateway",
-    "start:listing": "npm run start:dev -w listing-service"
+    "start:listing": "npm run start:dev -w listing-service",
+    "start:auth": "npm run start:dev -w auth-service",
+    "start:user": "npm run start:dev -w user-service"
   },
   "dependencies": {
     "@nestjs/config": "^4.0.0",
