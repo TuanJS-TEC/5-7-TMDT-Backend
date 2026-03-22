@@ -2,14 +2,13 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import Redis from 'ioredis';
-import { OtpController } from './otp.controller';
-import { OtpService } from './otp.service';
-import { SMS_GATEWAY } from './sms/sms-gateway.interface';
-import { MockSmsGateway } from './sms/mock-sms.gateway';
-import { UserServiceClient } from './user-service.client';
+import { OtpModule } from '../otp/otp.module';
+import { RegisterService } from './register.service';
+import { RegisterController } from './register.controller';
 
 @Module({
   imports: [
+    OtpModule,
     ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -20,8 +19,9 @@ import { UserServiceClient } from './user-service.client';
       }),
     }),
   ],
-  controllers: [OtpController],
+  controllers: [RegisterController],
   providers: [
+    RegisterService,
     {
       provide: 'REDIS_CLIENT',
       useFactory: (config: ConfigService): Redis | null => {
@@ -36,10 +36,6 @@ import { UserServiceClient } from './user-service.client';
       },
       inject: [ConfigService],
     },
-    { provide: SMS_GATEWAY, useClass: MockSmsGateway },
-    UserServiceClient,
-    OtpService,
   ],
-  exports: [OtpService, UserServiceClient],
 })
-export class OtpModule {}
+export class RegisterModule {}

@@ -4,6 +4,7 @@ import { UserEntity } from './user.entity';
 import { UsersService } from './users.service';
 import { NoopUsersService } from './noop-users.service';
 import { InternalPhoneController } from '../internal/internal-phone.controller';
+import { InternalUsersController } from '../internal/internal-users.controller';
 
 function skipDatabase(): boolean {
   return process.env.SKIP_DATABASE === 'true';
@@ -16,15 +17,17 @@ export class UsersModule {
     return {
       module: UsersModule,
       imports: skip ? [] : [TypeOrmModule.forFeature([UserEntity])],
-      controllers: [InternalPhoneController],
+      controllers: [InternalPhoneController, InternalUsersController],
       providers: skip
         ? [
             NoopUsersService,
             { provide: 'PHONE_MARKER', useExisting: NoopUsersService },
+            { provide: 'USERS_API', useExisting: NoopUsersService },
           ]
         : [
             UsersService,
             { provide: 'PHONE_MARKER', useExisting: UsersService },
+            { provide: 'USERS_API', useExisting: UsersService },
           ],
     };
   }

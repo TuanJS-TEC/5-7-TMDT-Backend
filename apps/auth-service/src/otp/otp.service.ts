@@ -121,7 +121,11 @@ export class OtpService {
   async verifyOtp(
     phoneRaw: string,
     code: string,
-  ): Promise<{ verificationToken: string; expiresIn: string }> {
+    options?: {
+      skipMarkPhoneVerified?: boolean;
+      skipVerificationToken?: boolean;
+    },
+  ): Promise<{ verificationToken?: string; expiresIn?: string }> {
     const phone = normalizeVietnamPhone(phoneRaw);
     const session = await this.getSession(phone);
     if (!session) {
@@ -157,7 +161,13 @@ export class OtpService {
     }
 
     await this.deleteSession(phone);
-    await this.userClient.markPhoneVerifiedInDb(phone);
+    if (!options?.skipMarkPhoneVerified) {
+      await this.userClient.markPhoneVerifiedInDb(phone);
+    }
+
+    if (options?.skipVerificationToken) {
+      return {};
+    }
 
     const verificationToken = await this.jwt.signAsync(
       {

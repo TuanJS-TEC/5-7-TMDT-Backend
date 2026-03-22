@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { join } from 'path';
 import { OtpModule } from './otp/otp.module';
+import { RegisterModule } from './register/register.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -15,6 +16,7 @@ import { HealthController } from './health.controller';
       ],
     }),
     OtpModule,
+    RegisterModule,
   ],
   controllers: [HealthController],
 })
