@@ -6,3 +6,7 @@ coverage/
 .env
 .env.local
 .DS_Store
+**/bin/
+**/obj/
+frontend/.env
+dotnet/.env
