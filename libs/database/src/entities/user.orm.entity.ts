@@ -52,4 +52,20 @@ export class UserOrmEntity extends BaseEntity {
 
   @Column({ type: 'varchar', length: 512, nullable: true })
   lastLoginUserAgent?: string | null;
+
+  /** UC15 — địa chỉ hiển thị / liên hệ */
+  @Column({ type: 'varchar', length: 500, default: '' })
+  address!: string;
+
+  /** UC15 — mô tả showroom / giới thiệu */
+  @Column({ type: 'text', default: '' })
+  sellerDescription!: string;
+
+  /** UC15 A1 — URL ảnh (upload local hoặc CDN) */
+  @Column({ type: 'varchar', length: 1024, nullable: true })
+  avatarUrl?: string | null;
+
+  /** UC15 — SĐT hiển thị công khai (khác SĐT đăng nhập nếu cần) */
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  displayPhone?: string | null;
 }

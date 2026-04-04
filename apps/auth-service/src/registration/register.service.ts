@@ -91,6 +91,7 @@ export class RegisterService {
 
     if (row.pendingExpiresAt <= now) {
       await this.pending.delete({ id: row.id });
+      await this.otp.removeChallenge(phone, 'registration');
       throw new NotFoundException({
         code: 'NO_PENDING_REGISTRATION',
         message: 'Phiên đăng ký đã hết hạn. Vui lòng đăng ký lại từ đầu.',
@@ -117,6 +118,7 @@ export class RegisterService {
 
     if (row.pendingExpiresAt <= now) {
       await this.pending.delete({ id: row.id });
+      await this.otp.removeChallenge(phone, 'registration');
       throw new NotFoundException({
         code: 'NO_PENDING_REGISTRATION',
         message: 'Phiên đăng ký đã hết hạn. Vui lòng đăng ký lại.',
