@@ -8,6 +8,9 @@ export type ListingStatus =
   | 'rejected'
   | 'sold';
 
+export type FuelType = 'petrol' | 'diesel' | 'electric' | 'hybrid';
+export type TransmissionType = 'automatic' | 'manual';
+
 export class Listing {
   constructor(
     public readonly id: string,
