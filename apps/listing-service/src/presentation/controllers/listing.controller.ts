@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   NotFoundException,
+  BadRequestException,
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
@@ -14,6 +15,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { CreateListingDto } from '../dto/create-listing.dto';
 import { UpdateListingDto } from '../dto/update-listing.dto';
@@ -28,12 +30,19 @@ import { DeleteListingCommand } from '../../application/commands/delete-listing/
 import { GetListingDetailQuery } from '../../application/queries/get-listing-detail/get-listing-detail.query';
 import { GetListingListQuery } from '../../application/queries/get-listing-list/get-listing-list.query';
 import { GetSellerListingsQuery } from '../../application/queries/get-seller-listings/get-seller-listings.query';
+import { ListingReadRepository } from '../../infrastructure/persistence/read/listing.read.repository';
+import { SearchListingsQuery } from '../../application/queries/search-listings/search-listings.query';
+import { FilterListingsQuery } from '../../application/queries/filter-listings/filter-listings.query';
+import { ConfigService } from '@nestjs/config'; // Thêm ConfigService để lấy URL của Auth Service
+import { ProfileService } from '../../infrastructure/auth/profile.service';
 
 @Controller({ path: 'listings', version: '1' })
 export class ListingController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly listingReadRepository: ListingReadRepository, // Để truy cập trực tiếp cho UC4
+    private readonly profileService: ProfileService, // Inject ProfileService để lấy thông tin người bán
   ) {}
 
   /**
@@ -66,14 +75,83 @@ export class ListingController {
    * GET /api/v1/listings?page=1&limit=20&status=approved
    * Lấy danh sách bài đăng, có thể filter theo status
    */
+  // @Get()
+  // list(
+  //   @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+  //   @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  //   @Query('status') status?: string,
+  // ) {
+  //   return this.queryBus.execute(
+  //     new GetListingListQuery(page, limit, status),
+  //   );
+  // }
   @Get()
-  list(
+  async list(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('status') status?: string,
+    @Query('sortBy', new DefaultValuePipe('createdAt')) sortBy: string = 'createdAt',
+    @Query('sortOrder', new DefaultValuePipe('desc')) sortOrder: 'asc' | 'desc' = 'desc',
   ) {
     return this.queryBus.execute(
-      new GetListingListQuery(page, limit, status),
+      new GetListingListQuery(page, limit, status, sortBy, sortOrder),
+    );
+  }
+
+  /**
+   * GET /api/v1/listings/search?keyword=toyota&page=1&limit=10
+   * UC2: Tìm kiếm xe theo từ khóa
+   */
+  @Get('search')
+  async search(
+    @Query('keyword') keyword: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('sortBy', new DefaultValuePipe('createdAt')) sortBy: string,
+    @Query('sortOrder', new DefaultValuePipe('desc')) sortOrder: 'asc' | 'desc',
+  ) {
+    if (!keyword) {
+      throw new BadRequestException('Keyword is required for search');
+    }
+    return this.queryBus.execute(
+      new SearchListingsQuery(keyword, page, limit, sortBy, sortOrder),
+    );
+  }
+
+  /**
+   * GET /api/v1/listings/filter?minPrice=...&maxPrice=...&carMake=...&carYear=...&page=1&limit=10
+   * UC3: Lọc xe nâng cao
+   */
+  @Get('filter')
+  async filter(
+    @Query('minPrice', new DefaultValuePipe(0), ParseIntPipe) minPrice: number,
+    @Query('maxPrice', new DefaultValuePipe(9999999999), ParseIntPipe) maxPrice: number,
+    @Query('minYear', new DefaultValuePipe(1900), ParseIntPipe) minYear: number,
+    @Query('maxYear', new DefaultValuePipe(new Date().getFullYear()), ParseIntPipe) maxYear: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('carMake') carMake?: string,
+    @Query('carModel') carModel?: string,
+    @Query('fuelType') fuelType?: string,
+    @Query('transmission') transmission?: string,
+    @Query('sortBy', new DefaultValuePipe('createdAt')) sortBy: string = 'createdAt',
+    @Query('sortOrder', new DefaultValuePipe('desc')) sortOrder: 'asc' | 'desc' = 'desc',
+  ) {
+    return this.queryBus.execute(
+      new FilterListingsQuery(
+        minPrice,
+        maxPrice,
+        minYear,
+        maxYear,
+        page,
+        limit,
+        carMake,
+        carModel,
+        fuelType,
+        transmission,
+        sortBy,
+        sortOrder,
+      ),
     );
   }
 
@@ -96,13 +174,43 @@ export class ListingController {
    * GET /api/v1/listings/:id
    * Xem chi tiết một bài đăng
    */
+  // @Get(':id')
+  // async getOne(@Param('id', ParseUUIDPipe) id: string) {
+  //   const row = await this.queryBus.execute(new GetListingDetailQuery(id));
+  //   if (!row) {
+  //     throw new NotFoundException('Listing not found');
+  //   }
+  //   return row;
+  // }
+  /**
+   * GET /api/v1/listings/:id
+   * UC4: Xem chi tiết một bài đăng
+   */
   @Get(':id')
   async getOne(@Param('id', ParseUUIDPipe) id: string) {
-    const row = await this.queryBus.execute(new GetListingDetailQuery(id));
-    if (!row) {
-      throw new NotFoundException('Listing not found');
+    // Lấy thông tin chi tiết listing
+    const listing = await this.queryBus.execute(new GetListingDetailQuery(id));
+
+    if (!listing || listing.status !== 'approved') { // Kiểm tra status của tin
+      throw new NotFoundException('Tin đăng này không tồn tại hoặc đã bị gỡ.'); // UC4 A1
     }
-    return row;
+    const rawListing = await this.listingReadRepository.findById(id); // Lấy raw record để update
+    if (rawListing) {
+        console.log(`Mock: Tăng viewCount cho listing ${id}`);
+        // await this.listingWriteRepository.update(id, { viewCount: (rawListing.viewCount ?? 0) + 1 });
+    }
+
+
+    // --- Lấy thông tin người bán từ Auth Service ---
+    // Gọi Auth Service để lấy thông tin public profile của người bán
+    // API Gateway sẽ proxy request này đến Auth Service
+    const sellerInfo = await this.profileService.getPublicSellerProfile(listing.sellerId);
+
+    // Trả về dữ liệu kết hợp
+    return {
+      ...listing,
+      seller: sellerInfo || { id: listing.sellerId, fullName: 'Người bán ẩn danh', accountType: 'individual', displayPhone: '******' }, // Mock nếu không tìm thấy
+    };
   }
 
   /**

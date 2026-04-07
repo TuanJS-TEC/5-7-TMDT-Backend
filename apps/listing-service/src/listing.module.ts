@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ListingOrmEntity } from './infrastructure/persistence/typeorm/listing.orm.entity';
 import { ListingController } from './presentation/controllers/listing.controller';
 import { CreateListingHandler } from './application/commands/create-listing/create-listing.handler';
 import { UpdateListingHandler } from './application/commands/update-listing/update-listing.handler';
+import { UpdateListingCommand } from './application/commands/update-listing/update-listing.command';
 import { ApproveListingHandler } from './application/commands/approve-listing/approve-listing.handler';
 import { RejectListingHandler } from './application/commands/reject-listing/reject-listing.handler';
 import { DeleteListingHandler } from './application/commands/delete-listing/delete-listing.handler';
@@ -19,6 +21,11 @@ import { ListingReadRepository } from './infrastructure/persistence/read/listing
 import { RabbitMqPublisher } from './infrastructure/messaging/rabbitmq.publisher';
 import { LISTING_STORE } from './infrastructure/persistence/listing.store.token';
 import type { ListingRecord } from './infrastructure/persistence/listing-record';
+import { createMockListingStore } from './infrastructure/persistence/mock-listing.store';
+import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler'; 
+import { FilterListingsHandler } from './application/queries/filter-listings/filter-listings.handler';
+import { ProfileService } from './infrastructure/auth/profile.service';
+import { ConfigModule } from '@nestjs/config';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -32,6 +39,8 @@ const queryHandlers = [
   GetListingDetailHandler,
   GetListingListHandler,
   GetSellerListingsHandler,
+  SearchListingsHandler, 
+  FilterListingsHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,
@@ -46,16 +55,24 @@ const typeOrmListing =
     : [TypeOrmModule.forFeature([ListingOrmEntity])];
 
 @Module({
-  imports: [CqrsModule, ...typeOrmListing],
+  // imports: [CqrsModule, ...typeOrmListing],
+  imports: [
+    CqrsModule,
+    ConfigModule, // Cần ConfigModule để ProfileService đọc biến môi trường
+    HttpModule, // Cần HttpModule để ProfileService có thể gọi HTTP request
+    ...typeOrmListing,
+  ],
   controllers: [ListingController],
   providers: [
     {
       provide: LISTING_STORE,
-      useFactory: (): Map<string, ListingRecord> => new Map(),
+      // useFactory: (): Map<string, ListingRecord> => new Map(),
+      useFactory: createMockListingStore,
     },
     ListingWriteRepository,
     ListingReadRepository,
     RabbitMqPublisher,
+    ProfileService,
     ...commandHandlers,
     ...queryHandlers,
     ...eventHandlers,
