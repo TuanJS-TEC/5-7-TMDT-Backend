@@ -17,16 +17,30 @@ export class ListingReadRepository {
       description: r.description,
       priceVnd: r.priceVnd,
       sellerId: r.sellerId,
+      packageType: r.packageType,
+      imageUrls: r.imageUrls ?? [],
+      carMake: r.carMake,
+      carModel: r.carModel,
+      carYear: r.carYear,
+      mileageKm: r.mileageKm,
+      fuelType: r.fuelType,
+      transmission: r.transmission,
       status: r.status,
       createdAt: r.createdAt.toISOString(),
       updatedAt: r.updatedAt.toISOString(),
       approvedAt: r.approvedAt?.toISOString(),
+      rejectionReason: r.rejectionReason,
     };
   }
 
   async findById(id: string): Promise<ListingResponseDto | null> {
     const r = this.store.get(id);
     return r ? this.toDto(r) : null;
+  }
+
+  /** UC17 — trả về raw records để listing-image.service lọc manual review */
+  async findAllRecords(): Promise<ListingRecord[]> {
+    return [...this.store.values()];
   }
 
   async findMany(

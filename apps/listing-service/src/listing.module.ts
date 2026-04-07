@@ -6,12 +6,14 @@ import { ListingController } from './presentation/controllers/listing.controller
 import { CreateListingHandler } from './application/commands/create-listing/create-listing.handler';
 import { UpdateListingHandler } from './application/commands/update-listing/update-listing.handler';
 import { ApproveListingHandler } from './application/commands/approve-listing/approve-listing.handler';
+import { RejectListingHandler } from './application/commands/reject-listing/reject-listing.handler';
 import { DeleteListingHandler } from './application/commands/delete-listing/delete-listing.handler';
 import { GetListingDetailHandler } from './application/queries/get-listing-detail/get-listing-detail.handler';
 import { GetListingListHandler } from './application/queries/get-listing-list/get-listing-list.handler';
 import { GetSellerListingsHandler } from './application/queries/get-seller-listings/get-seller-listings.handler';
 import { ListingCreatedHandler } from './application/events/listing-created/listing-created.handler';
 import { ListingApprovedHandler } from './application/events/listing-approved/listing-approved.handler';
+import { ListingRejectedHandler } from './application/events/listing-rejected/listing-rejected.handler';
 import { ListingWriteRepository } from './infrastructure/persistence/write/listing.write.repository';
 import { ListingReadRepository } from './infrastructure/persistence/read/listing.read.repository';
 import { RabbitMqPublisher } from './infrastructure/messaging/rabbitmq.publisher';
@@ -22,6 +24,8 @@ const commandHandlers = [
   CreateListingHandler,
   UpdateListingHandler,
   ApproveListingHandler,
+  /** UC16 A1 — admin từ chối bài đăng */
+  RejectListingHandler,
   DeleteListingHandler,
 ];
 const queryHandlers = [
@@ -29,7 +33,12 @@ const queryHandlers = [
   GetListingListHandler,
   GetSellerListingsHandler,
 ];
-const eventHandlers = [ListingCreatedHandler, ListingApprovedHandler];
+const eventHandlers = [
+  ListingCreatedHandler,
+  ListingApprovedHandler,
+  /** UC16 A1 — publish listing.rejected event → notification-service */
+  ListingRejectedHandler,
+];
 
 const typeOrmListing =
   process.env.SKIP_DATABASE === 'true'
@@ -52,4 +61,4 @@ const typeOrmListing =
     ...eventHandlers,
   ],
 })
-export class ListingModule {}
+export class ListingModule { }

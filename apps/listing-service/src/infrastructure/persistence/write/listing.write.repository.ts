@@ -10,7 +10,7 @@ export class ListingWriteRepository {
   ) {}
 
   async create(
-    data: Omit<ListingRecord, 'approvedAt'>,
+    data: Omit<ListingRecord, 'approvedAt' | 'rejectionReason'>,
   ): Promise<ListingRecord> {
     const record: ListingRecord = { ...data };
     this.store.set(record.id, record);
@@ -24,7 +24,25 @@ export class ListingWriteRepository {
   async update(
     id: string,
     patch: Partial<
-      Pick<ListingRecord, 'title' | 'description' | 'priceVnd' | 'status'>
+      Pick<
+        ListingRecord,
+        | 'title'
+        | 'description'
+        | 'priceVnd'
+        | 'status'
+        | 'packageType'
+        | 'imageUrls'
+        | 'carMake'
+        | 'carModel'
+        | 'carYear'
+        | 'mileageKm'
+        | 'fuelType'
+        | 'transmission'
+        | 'imageAiFailureCount'
+        | 'manualImageReviewRequested'
+        | 'pendingManualReviewImageUrl'
+        | 'imageModerationState'
+      >
     >,
   ): Promise<void> {
     const existing = this.store.get(id);
@@ -50,6 +68,22 @@ export class ListingWriteRepository {
       status: 'approved',
       approvedAt,
       updatedAt: approvedAt,
+    };
+    this.store.set(id, updated);
+  }
+
+  /** UC16 A1 — Admin từ chối / huỷ bài đăng */
+  async reject(id: string, reason: string): Promise<void> {
+    const existing = this.store.get(id);
+    if (!existing) {
+      return;
+    }
+    const now = new Date();
+    const updated: ListingRecord = {
+      ...existing,
+      status: 'rejected',
+      rejectionReason: reason,
+      updatedAt: now,
     };
     this.store.set(id, updated);
   }
