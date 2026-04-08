@@ -24,6 +24,13 @@ import type { ListingRecord } from './infrastructure/persistence/listing-record'
 import { createMockListingStore } from './infrastructure/persistence/mock-listing.store';
 import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler'; 
 import { FilterListingsHandler } from './application/queries/filter-listings/filter-listings.handler';
+import { GetListingPackagesHandler } from './application/queries/get-listing-packages/get-listing-packages.handler';
+import { ShareListingHandler } from './application/commands/share-listing/share-listing.handler';
+import { ReportListingHandler } from './application/commands/report-listing/report-listing.handler';
+import { ReportReadRepository } from './infrastructure/persistence/read/report.read.repository';
+import { ReportWriteRepository } from './infrastructure/persistence/write/report.write.repository';
+import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
+import { ReportRecord } from './infrastructure/persistence/report-record';
 import { ProfileService } from './infrastructure/auth/profile.service';
 import { ConfigModule } from '@nestjs/config';
 
@@ -34,6 +41,8 @@ const commandHandlers = [
   /** UC16 A1 — admin từ chối bài đăng */
   RejectListingHandler,
   DeleteListingHandler,
+  ShareListingHandler,
+  ReportListingHandler,
 ];
 const queryHandlers = [
   GetListingDetailHandler,
@@ -41,6 +50,8 @@ const queryHandlers = [
   GetSellerListingsHandler,
   SearchListingsHandler, 
   FilterListingsHandler,
+  /** UC18 — Lấy danh sách gói đăng tin */
+  GetListingPackagesHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,
@@ -66,11 +77,16 @@ const typeOrmListing =
   providers: [
     {
       provide: LISTING_STORE,
-      // useFactory: (): Map<string, ListingRecord> => new Map(),
       useFactory: createMockListingStore,
+    },
+    {
+      provide: REPORT_STORE,
+      useValue: new Map<string, ReportRecord>(),
     },
     ListingWriteRepository,
     ListingReadRepository,
+    ReportReadRepository,
+    ReportWriteRepository,
     RabbitMqPublisher,
     ProfileService,
     ...commandHandlers,
