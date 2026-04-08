@@ -1,0 +1,1 @@
+export const PAYMENT_STORE = 'PAYMENT_STORE';
