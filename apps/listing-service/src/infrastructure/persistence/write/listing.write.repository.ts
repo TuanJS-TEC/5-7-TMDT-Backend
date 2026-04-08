@@ -88,6 +88,18 @@ export class ListingWriteRepository {
     this.store.set(id, updated);
   }
 
+  async incrementShareCount(id: string): Promise<boolean> {
+    const existing = this.store.get(id);
+    if (!existing) return false;
+
+    const updated: ListingRecord = {
+      ...existing,
+      shareCount: (existing.shareCount ?? 0) + 1,
+    };
+    this.store.set(id, updated);
+    return true;
+  }
+
   async delete(id: string): Promise<void> {
     this.store.delete(id);
   }
