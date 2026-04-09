@@ -9,6 +9,7 @@ export interface PublicSellerProfileDto {
   fullName: string;
   avatarUrl?: string;
   displayPhone: string; // SĐT hiển thị công khai (có thể bị che)
+  fullPhone: string; // UC5, UC6: SĐT đầy đủ (không che)
   accountType: 'individual' | 'dealer' | 'admin';
   sellerDescription?: string;
 }
@@ -35,6 +36,7 @@ export class ProfileService {
           fullName: 'Nguyễn Văn A',
           avatarUrl: 'https://via.placeholder.com/150/FF5733/FFFFFF?text=A',
           displayPhone: '098-xxx-789',
+          fullPhone: '0981234789',
           accountType: 'dealer',
           sellerDescription: 'Chuyên mua bán xe cũ chất lượng.',
         },
@@ -43,6 +45,7 @@ export class ProfileService {
           fullName: 'Trần Thị B',
           avatarUrl: 'https://via.placeholder.com/150/C70039/FFFFFF?text=B',
           displayPhone: '091-xxx-123',
+          fullPhone: '0912345123',
           accountType: 'individual',
           sellerDescription: 'Bán xe gia đình, giữ gìn cẩn thận.',
         },
@@ -51,6 +54,7 @@ export class ProfileService {
           fullName: 'Lê Văn C Showroom',
           avatarUrl: 'https://via.placeholder.com/150/900C3F/FFFFFF?text=C',
           displayPhone: '088-xxx-456',
+          fullPhone: '0884567456',
           accountType: 'dealer',
           sellerDescription: 'Showroom xe uy tín, cam kết không lỗi.',
         },
