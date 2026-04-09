@@ -24,8 +24,16 @@ import type { ListingRecord } from './infrastructure/persistence/listing-record'
 import { createMockListingStore } from './infrastructure/persistence/mock-listing.store';
 import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler'; 
 import { FilterListingsHandler } from './application/queries/filter-listings/filter-listings.handler';
-import { ProfileService } from './infrastructure/auth/profile.service';
+import { CompareListingsHandler } from './application/queries/compare-listings/compare-listings.handler';
+import { FAVORITE_STORE } from './infrastructure/persistence/listing.store.token';
+import { createMockFavoriteStore } from './infrastructure/persistence/mock-favorite.store';
+import { FavoriteReadRepository } from './infrastructure/persistence/read/favorite.read.repository';
+import { FavoriteWriteRepository } from './infrastructure/persistence/write/favorite.write.repository';
+import { AddFavoriteHandler } from './application/commands/add-favorite/add-favorite.handler';
+import { RemoveFavoriteHandler } from './application/commands/remove-favorite/remove-favorite.handler';
+import { GetFavoriteListingsHandler } from './application/queries/get-favorite-listings/get-favorite-listings.handler';
 import { ConfigModule } from '@nestjs/config';
+import { ProfileService } from './infrastructure/auth/profile.service';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -34,6 +42,8 @@ const commandHandlers = [
   /** UC16 A1 — admin từ chối bài đăng */
   RejectListingHandler,
   DeleteListingHandler,
+  AddFavoriteHandler,
+  RemoveFavoriteHandler,
 ];
 const queryHandlers = [
   GetListingDetailHandler,
@@ -41,6 +51,8 @@ const queryHandlers = [
   GetSellerListingsHandler,
   SearchListingsHandler, 
   FilterListingsHandler,
+  CompareListingsHandler,
+  GetFavoriteListingsHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,
@@ -66,11 +78,16 @@ const typeOrmListing =
   providers: [
     {
       provide: LISTING_STORE,
-      // useFactory: (): Map<string, ListingRecord> => new Map(),
       useFactory: createMockListingStore,
+    },
+    {
+      provide: FAVORITE_STORE,
+      useFactory: createMockFavoriteStore,
     },
     ListingWriteRepository,
     ListingReadRepository,
+    FavoriteReadRepository,
+    FavoriteWriteRepository,
     RabbitMqPublisher,
     ProfileService,
     ...commandHandlers,
