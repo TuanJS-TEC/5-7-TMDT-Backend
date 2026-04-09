@@ -33,6 +33,10 @@ import { GetSellerListingsQuery } from '../../application/queries/get-seller-lis
 import { ListingReadRepository } from '../../infrastructure/persistence/read/listing.read.repository';
 import { SearchListingsQuery } from '../../application/queries/search-listings/search-listings.query';
 import { FilterListingsQuery } from '../../application/queries/filter-listings/filter-listings.query';
+import { CompareListingsQuery } from '../../application/queries/compare-listings/compare-listings.query';
+import { AddFavoriteCommand } from '../../application/commands/add-favorite/add-favorite.command';
+import { RemoveFavoriteCommand } from '../../application/commands/remove-favorite/remove-favorite.command';
+import { GetFavoriteListingsQuery } from '../../application/queries/get-favorite-listings/get-favorite-listings.query';
 import { ConfigService } from '@nestjs/config'; // Thêm ConfigService để lấy URL của Auth Service
 import { ProfileService } from '../../infrastructure/auth/profile.service';
 
@@ -156,6 +160,44 @@ export class ListingController {
   }
 
   /**
+   * GET /api/v1/listings/compare?ids=id1,id2,id3
+   * UC7: So sánh xe (tối đa 3 xe)
+   */
+  @Get('compare')
+  async compareListings(@Query('ids') idsString: string) {
+    if (!idsString) {
+      throw new BadRequestException('Vui lòng cung cấp danh sách ID xe cần so sánh qua tham số ?ids=');
+    }
+
+    const ids = idsString.split(',').map((id) => id.trim()).filter((id) => id.length > 0);
+    
+    if (ids.length > 3) {
+      throw new BadRequestException('Chỉ hỗ trợ so sánh tối đa 3 xe.');
+    }
+    
+    if (ids.length === 0) {
+       throw new BadRequestException('Danh sách ID không hợp lệ.');
+    }
+
+    // Giả lập tracking (UC7)
+    console.log(`Mock: Tracking - Người dùng đang so sánh các xe có ID: ${ids.join(', ')}`);
+
+    const listings = await this.queryBus.execute(new CompareListingsQuery(ids));
+    return listings;
+  }
+
+  /**
+   * GET /api/v1/listings/favorites?userId=xxx
+   * UC8: Lấy danh sách xe yêu thích của người dùng
+   */
+  @Get('favorites')
+  async getFavorites(@Query('userId', ParseUUIDPipe) userId: string) {
+    // Giả lập tracking (UC8)
+    console.log(`Mock: Tracking - Người dùng ${userId} đang xem danh sách xe yêu thích`);
+    return this.queryBus.execute(new GetFavoriteListingsQuery(userId));
+  }
+
+  /**
    * GET /api/v1/listings/seller/:sellerId
    * Lấy danh sách bài đăng của một người bán cụ thể
    */
@@ -210,6 +252,91 @@ export class ListingController {
     return {
       ...listing,
       seller: sellerInfo || { id: listing.sellerId, fullName: 'Người bán ẩn danh', accountType: 'individual', displayPhone: '******' }, // Mock nếu không tìm thấy
+    };
+  }
+
+  /**
+   * GET /api/v1/listings/:id/phone
+   * UC5: Xem số điện thoại người bán
+   */
+  @Get(':id/phone')
+  async getSellerPhone(@Param('id', ParseUUIDPipe) id: string) {
+    const listing = await this.queryBus.execute(new GetListingDetailQuery(id));
+    if (!listing || listing.status !== 'approved') {
+      throw new NotFoundException('Tin đăng này không tồn tại hoặc đã bị gỡ.');
+    }
+
+    console.log(`Mock: Tracking - Người dùng xem số điện thoại của tin đăng ${id}`);
+
+    const sellerInfo = await this.profileService.getPublicSellerProfile(listing.sellerId);
+    if (!sellerInfo || !sellerInfo.fullPhone) {
+      throw new NotFoundException('Không tìm thấy thông tin liên hệ của người bán.');
+    }
+
+    return {
+      phone: sellerInfo.fullPhone,
+    };
+  }
+
+  /**
+   * POST /api/v1/listings/:id/favorite
+   * UC8: Thêm xe vào danh sách yêu thích
+   */
+  @Post(':id/favorite')
+  @HttpCode(HttpStatus.OK)
+  async addFavorite(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('userId', ParseUUIDPipe) userId: string,
+  ) {
+    const listing = await this.queryBus.execute(new GetListingDetailQuery(id));
+    if (!listing || listing.status !== 'approved') {
+      throw new NotFoundException('Tin đăng không tồn tại hoặc chưa được duyệt.');
+    }
+    
+    // Giả lập tracking (UC8)
+    console.log(`Mock: Tracking - Người dùng ${userId} đã lưu xe ${id} vào Mục Yêu Thích`);
+    
+    await this.commandBus.execute(new AddFavoriteCommand(userId, id));
+    return { success: true, message: 'Đã lưu xe vào danh sách yêu thích.' };
+  }
+
+  /**
+   * DELETE /api/v1/listings/:id/favorite
+   * UC8: Xóa xe khỏi danh sách yêu thích
+   */
+  @Delete(':id/favorite')
+  @HttpCode(HttpStatus.OK)
+  async removeFavorite(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('userId', ParseUUIDPipe) userId: string,
+  ) {
+    // Giả lập tracking (UC8)
+    console.log(`Mock: Tracking - Người dùng ${userId} đã xoá xe ${id} khỏi Danh Sách Yêu Thích`);
+    
+    await this.commandBus.execute(new RemoveFavoriteCommand(userId, id));
+    return { success: true, message: 'Đã bỏ lưu xe khỏi danh sách yêu thích.' };
+  }
+
+  /**
+   * GET /api/v1/listings/:id/zalo
+   * UC6: Chat Zalo với người bán
+   */
+  @Get(':id/zalo')
+  async getZaloLink(@Param('id', ParseUUIDPipe) id: string) {
+    const listing = await this.queryBus.execute(new GetListingDetailQuery(id));
+    if (!listing || listing.status !== 'approved') {
+      throw new NotFoundException('Tin đăng này không tồn tại hoặc đã bị gỡ.');
+    }
+
+    console.log(`Mock: Tracking - Người dùng click chat Zalo của tin đăng ${id}`);
+
+    const sellerInfo = await this.profileService.getPublicSellerProfile(listing.sellerId);
+    if (!sellerInfo || !sellerInfo.fullPhone) {
+      throw new NotFoundException('Không tìm thấy thông tin liên hệ của người bán.');
+    }
+
+    return {
+      zaloUrl: `https://zalo.me/${sellerInfo.fullPhone}`,
     };
   }
 
