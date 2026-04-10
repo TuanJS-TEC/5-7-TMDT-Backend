@@ -22,6 +22,7 @@ import { UpdateListingDto } from '../dto/update-listing.dto';
 import { DeleteListingDto } from '../dto/delete-listing.dto';
 import { ApproveListingDto } from '../dto/approve-listing.dto';
 import { RejectListingDto } from '../dto/reject-listing.dto';
+import { ReportListingDto } from '../dto/report-listing.dto';
 import { CreateListingCommand } from '../../application/commands/create-listing/create-listing.command';
 import { UpdateListingCommand } from '../../application/commands/update-listing/update-listing.command';
 import { ApproveListingCommand } from '../../application/commands/approve-listing/approve-listing.command';
@@ -33,6 +34,9 @@ import { GetSellerListingsQuery } from '../../application/queries/get-seller-lis
 import { ListingReadRepository } from '../../infrastructure/persistence/read/listing.read.repository';
 import { SearchListingsQuery } from '../../application/queries/search-listings/search-listings.query';
 import { FilterListingsQuery } from '../../application/queries/filter-listings/filter-listings.query';
+import { GetListingPackagesQuery } from '../../application/queries/get-listing-packages/get-listing-packages.query';
+import { ShareListingCommand } from '../../application/commands/share-listing/share-listing.command';
+import { ReportListingCommand } from '../../application/commands/report-listing/report-listing.command';
 import { CompareListingsQuery } from '../../application/queries/compare-listings/compare-listings.query';
 import { AddFavoriteCommand } from '../../application/commands/add-favorite/add-favorite.command';
 import { RemoveFavoriteCommand } from '../../application/commands/remove-favorite/remove-favorite.command';
@@ -100,6 +104,55 @@ export class ListingController {
     return this.queryBus.execute(
       new GetListingListQuery(page, limit, status, sortBy, sortOrder),
     );
+  }
+
+  /**
+   * GET /api/v1/listings/packages
+   * UC18 — Trả về danh sách các gói đăng tin (basic / premium / vip)
+   * Client dùng để hiển thị trang chọn gói trước khi đăng tin
+   */
+  @Get('packages')
+  getPackages() {
+    return this.queryBus.execute(new GetListingPackagesQuery());
+  }
+
+  /**
+   * POST /api/v1/listings/:id/share
+   * UC9 — Chia sẻ tin đăng (Cập nhật shareCount và trả về link)
+   */
+  @Post(':id/share')
+  async shareListing(@Param('id') id: string) {
+    const url = await this.commandBus.execute(new ShareListingCommand(id));
+    return {
+      success: true,
+      data: {
+        shareUrl: url,
+        message: 'Lấy link chia sẻ thành công. Lượt chia sẻ đã được ghi nhận.'
+      }
+    };
+  }
+
+  /**
+   * POST /api/v1/listings/:id/report
+   * UC10 — Báo cáo vi phạm (lừa đảo, thông tin sai,...)
+   */
+  @Post(':id/report')
+  async reportListing(
+    @Param('id') id: string,
+    @Body() body: ReportListingDto
+  ) {
+    // Tạm mock userId, thực tế lấy từ authentication middleware
+    const mockReporterId = 'user-reporter-456';
+    const reportId = await this.commandBus.execute(
+      new ReportListingCommand(id, mockReporterId, body.reason, body.description)
+    );
+    return {
+      success: true,
+      data: {
+        reportId,
+        message: 'Báo cáo vi phạm đã được gửi thành công. Chúng tôi sẽ xử lý sớm nhất.'
+      }
+    };
   }
 
   /**

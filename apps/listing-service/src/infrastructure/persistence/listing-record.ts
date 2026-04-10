@@ -11,6 +11,7 @@ export interface ListingRecord {
   sellerId: string;
   /** UC16 — gói tin người bán chọn */
   packageType: ListingPackageType;
+  shareCount?: number;
   /** UC16 — mảng URL ảnh xe */
   imageUrls: string[];
   /** Hãng xe */
