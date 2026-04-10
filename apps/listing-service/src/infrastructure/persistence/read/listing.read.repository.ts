@@ -39,6 +39,14 @@ export class ListingReadRepository {
     return r ? this.toDto(r) : null;
   }
 
+  // UC7 — Lấy nhiều xe theo mảng ID
+  async findByIds(ids: string[]): Promise<ListingResponseDto[]> {
+    return ids
+      .map((id) => this.store.get(id))
+      .filter((r): r is ListingRecord => r !== undefined && r.status === 'approved')
+      .map((r) => this.toDto(r));
+  }
+
   /** UC17 — trả về raw records để listing-image.service lọc manual review */
   async findAllRecords(): Promise<ListingRecord[]> {
     return [...this.store.values()];

@@ -32,7 +32,16 @@ import { ReportWriteRepository } from './infrastructure/persistence/write/report
 import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
 import { ReportRecord } from './infrastructure/persistence/report-record';
 import { ProfileService } from './infrastructure/auth/profile.service';
+import { CompareListingsHandler } from './application/queries/compare-listings/compare-listings.handler';
+import { FAVORITE_STORE } from './infrastructure/persistence/listing.store.token';
+import { createMockFavoriteStore } from './infrastructure/persistence/mock-favorite.store';
+import { FavoriteReadRepository } from './infrastructure/persistence/read/favorite.read.repository';
+import { FavoriteWriteRepository } from './infrastructure/persistence/write/favorite.write.repository';
+import { AddFavoriteHandler } from './application/commands/add-favorite/add-favorite.handler';
+import { RemoveFavoriteHandler } from './application/commands/remove-favorite/remove-favorite.handler';
+import { GetFavoriteListingsHandler } from './application/queries/get-favorite-listings/get-favorite-listings.handler';
 import { ConfigModule } from '@nestjs/config';
+import { ProfileService } from './infrastructure/auth/profile.service';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -43,6 +52,8 @@ const commandHandlers = [
   DeleteListingHandler,
   ShareListingHandler,
   ReportListingHandler,
+  AddFavoriteHandler,
+  RemoveFavoriteHandler,
 ];
 const queryHandlers = [
   GetListingDetailHandler,
@@ -52,6 +63,8 @@ const queryHandlers = [
   FilterListingsHandler,
   /** UC18 — Lấy danh sách gói đăng tin */
   GetListingPackagesHandler,
+  CompareListingsHandler,
+  GetFavoriteListingsHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,
@@ -87,6 +100,13 @@ const typeOrmListing =
     ListingReadRepository,
     ReportReadRepository,
     ReportWriteRepository,
+      provide: FAVORITE_STORE,
+      useFactory: createMockFavoriteStore,
+    },
+    ListingWriteRepository,
+    ListingReadRepository,
+    FavoriteReadRepository,
+    FavoriteWriteRepository,
     RabbitMqPublisher,
     ProfileService,
     ...commandHandlers,
