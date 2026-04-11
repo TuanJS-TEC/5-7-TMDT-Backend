@@ -46,4 +46,10 @@ export interface ListingRecord {
   pendingManualReviewImageUrl?: string;
   /** UC17 — trạng thái kiểm duyệt ảnh: 'none' | 'pending_manual_review' */
   imageModerationState?: string;
+  /** UC38 — thời điểm gỡ tin (admin) */
+  removedAt?: Date;
+  /** UC38 — QTV thực hiện */
+  removedBy?: string;
+  /** UC38 — lý do gỡ hàng loạt */
+  adminRemovalReason?: string;
 }

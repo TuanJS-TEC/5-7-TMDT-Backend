@@ -23,10 +23,6 @@ import { ListingReadRepository } from './infrastructure/persistence/read/listing
 import { RabbitMqPublisher } from './infrastructure/messaging/rabbitmq.publisher';
 import { FAVORITE_STORE, LISTING_STORE } from './infrastructure/persistence/listing.store.token';
 import type { ListingRecord } from './infrastructure/persistence/listing-record';
-import {
-  createMockFavoriteStore,
-  createMockListingStore,
-} from './infrastructure/persistence/mock-listing.store';
 import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler'; 
 import { FilterListingsHandler } from './application/queries/filter-listings/filter-listings.handler';
 import { GetListingPackagesHandler } from './application/queries/get-listing-packages/get-listing-packages.handler';
@@ -36,7 +32,6 @@ import { ReportReadRepository } from './infrastructure/persistence/read/report.r
 import { ReportWriteRepository } from './infrastructure/persistence/write/report.write.repository';
 import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
 import { ReportRecord } from './infrastructure/persistence/report-record';
-import { createMockReportStore } from './infrastructure/persistence/mock-report.store';
 import { ProfileService } from './infrastructure/auth/profile.service';
 import { CompareListingsHandler } from './application/queries/compare-listings/compare-listings.handler';
 import { FavoriteReadRepository } from './infrastructure/persistence/read/favorite.read.repository';
@@ -49,6 +44,17 @@ import { PaymentPackagePaidConsumer } from './infrastructure/messaging/payment-p
 import { PaymentRefundCompletedConsumer } from './infrastructure/messaging/payment-refund-completed.consumer';
 import { ReportModerationService } from './application/services/report-moderation.service';
 import { ReportNotificationService } from './application/services/report-notification.service';
+import { SellerWarningService } from './application/services/seller-warning.service';
+import { SELLER_WARNING_STORE } from './infrastructure/persistence/seller-warning.store.token';
+import { SellerWarningReadRepository } from './infrastructure/persistence/read/seller-warning.read.repository';
+import { SellerWarningWriteRepository } from './infrastructure/persistence/write/seller-warning.write.repository';
+import { NotificationHttpClient } from './infrastructure/notifications/notification-http.client';
+import { AuthAccountHttpClient } from './infrastructure/auth/auth-account-http.client';
+import { AccountLockService } from './application/services/account-lock.service';
+import { SellerListingsRemovalService } from './application/services/seller-listings-removal.service';
+import { UC38_REMOVAL_AUDIT_STORE } from './infrastructure/persistence/uc38-removal-audit.store.token';
+import { Uc38RemovalAuditReadRepository } from './infrastructure/persistence/read/uc38-removal-audit.read.repository';
+import { Uc38RemovalAuditWriteRepository } from './infrastructure/persistence/write/uc38-removal-audit.write.repository';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -83,6 +89,22 @@ const eventHandlers = [
   ListingModificationRequestedHandler,
 ];
 
+let createMockListingStore: any = () => new Map();
+let createMockFavoriteStore: any = () => new Map();
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mockListing = require('./infrastructure/persistence/mock-listing.store');
+  createMockListingStore = mockListing.createMockListingStore || createMockListingStore;
+  createMockFavoriteStore = mockListing.createMockFavoriteStore || createMockFavoriteStore;
+} catch (e) {}
+
+let createMockReportStore: any = () => new Map();
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mockReport = require('./infrastructure/persistence/mock-report.store');
+  createMockReportStore = mockReport.createMockReportStore || createMockReportStore;
+} catch (e) {}
+
 const typeOrmListing =
   process.env.SKIP_DATABASE === 'true'
     ? []
@@ -106,6 +128,14 @@ const typeOrmListing =
       provide: REPORT_STORE,
       useFactory: createMockReportStore,
     },
+    {
+      provide: SELLER_WARNING_STORE,
+      useFactory: () => new Map(),
+    },
+    {
+      provide: UC38_REMOVAL_AUDIT_STORE,
+      useFactory: () => new Map(),
+    },
     ListingWriteRepository,
     ListingReadRepository,
     ReportReadRepository,
@@ -122,6 +152,15 @@ const typeOrmListing =
     ProfileService,
     ReportModerationService,
     ReportNotificationService,
+    SellerWarningReadRepository,
+    SellerWarningWriteRepository,
+    NotificationHttpClient,
+    AuthAccountHttpClient,
+    SellerWarningService,
+    Uc38RemovalAuditReadRepository,
+    Uc38RemovalAuditWriteRepository,
+    SellerListingsRemovalService,
+    AccountLockService,
     ...commandHandlers,
     ...queryHandlers,
     ...eventHandlers,

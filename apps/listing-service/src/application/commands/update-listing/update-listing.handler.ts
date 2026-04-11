@@ -22,6 +22,13 @@ export class UpdateListingHandler
       throw new BadRequestException('Sold listing cannot be edited');
     }
 
+    if (existing.status === 'removed') {
+      throw new BadRequestException({
+        code: 'LISTING_REMOVED_BY_ADMIN',
+        message: 'Tin da bi go hien thi boi quan tri, khong the chinh sua.',
+      });
+    }
+
     const shouldResubmitForModeration =
       existing.status === 'approved' ||
       existing.status === 'rejected' ||

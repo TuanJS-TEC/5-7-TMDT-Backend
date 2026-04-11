@@ -31,4 +31,8 @@ export interface ListingResponseDto {
   modificationRequestedBy?: string;
   /** UC33 — thời điểm yêu cầu sửa */
   modificationRequestedAt?: string;
+  /** UC38 */
+  removedAt?: string;
+  removedBy?: string;
+  adminRemovalReason?: string;
 }

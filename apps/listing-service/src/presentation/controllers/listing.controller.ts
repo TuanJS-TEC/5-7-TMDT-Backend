@@ -47,6 +47,12 @@ import { ConfigService } from '@nestjs/config'; // Thêm ConfigService để l�
 import { ProfileService } from '../../infrastructure/auth/profile.service';
 import { ProcessReportDto } from '../dto/process-report.dto';
 import { ReportModerationService } from '../../application/services/report-moderation.service';
+import { SellerWarningReadRepository } from '../../infrastructure/persistence/read/seller-warning.read.repository';
+import { LockUserAccountDto } from '../dto/lock-user-account.dto';
+import { AccountLockService } from '../../application/services/account-lock.service';
+import { RemoveAllActiveListingsDto } from '../dto/remove-all-active-listings.dto';
+import { SellerListingsRemovalService } from '../../application/services/seller-listings-removal.service';
+import { Uc38RemovalAuditReadRepository } from '../../infrastructure/persistence/read/uc38-removal-audit.read.repository';
 
 @Controller({ path: 'listings', version: '1' })
 export class ListingController {
@@ -56,6 +62,10 @@ export class ListingController {
     private readonly listingReadRepository: ListingReadRepository, // Để truy cập trực tiếp cho UC4
     private readonly profileService: ProfileService, // Inject ProfileService để lấy thông tin người bán
     private readonly reportModerationService: ReportModerationService,
+    private readonly sellerWarningReadRepository: SellerWarningReadRepository,
+    private readonly accountLockService: AccountLockService,
+    private readonly sellerListingsRemovalService: SellerListingsRemovalService,
+    private readonly uc38RemovalAuditReadRepository: Uc38RemovalAuditReadRepository,
   ) {}
 
   /**
@@ -260,6 +270,8 @@ export class ListingController {
   /**
    * PATCH /api/v1/listings/admin/reports/:reportId/process
    * UC35 bước 3-4-5 — QTV ra quyết định xử lý và hệ thống thông báo kết quả
+   * UC36 — khi action = warn_account: gửi cảnh báo qua notification-service (UC60) và ghi lịch sử.
+   * UC38 — khi action = remove_all_listings: gỡ (soft) toàn bộ tin approved của seller + audit.
    */
   @Patch('admin/reports/:reportId/process')
   @HttpCode(HttpStatus.OK)
@@ -272,6 +284,97 @@ export class ListingController {
       success: true,
       message: 'Da xu ly bao cao vi pham',
       data,
+    };
+  }
+
+  /**
+   * POST /api/v1/listings/admin/users/:userId/lock
+   * UC37 — khóa tài khoản từ quản lý người dùng (không gắn báo cáo UC35).
+   */
+  @Post('admin/users/:userId/lock')
+  @HttpCode(HttpStatus.OK)
+  async lockUserAccount(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() body: LockUserAccountDto,
+  ) {
+    const data = await this.accountLockService.lockAccountByUserId(userId, {
+      moderatorId: body.moderatorId,
+      reason: body.reason.trim(),
+      lockUntil: body.lockUntil,
+    });
+    return {
+      success: true,
+      message: 'Da khoa tai khoan',
+      data,
+    };
+  }
+
+  /**
+   * GET /api/v1/listings/admin/sellers/:sellerId/warnings
+   * UC36 — lịch sử cảnh báo chính thức của tài khoản người bán.
+   */
+  @Get('admin/sellers/:sellerId/warnings')
+  async listSellerWarnings(@Param('sellerId', ParseUUIDPipe) sellerId: string) {
+    const items = await this.sellerWarningReadRepository.findBySellerId(sellerId);
+    return {
+      total: items.length,
+      items,
+    };
+  }
+
+  /**
+   * POST /api/v1/listings/admin/sellers/:sellerId/listings/remove-all-active
+   * UC38 — gỡ hiển thị toàn bộ tin đang active (`approved`) của seller (lệnh hàng loạt).
+   */
+  @Post('admin/sellers/:sellerId/listings/remove-all-active')
+  @HttpCode(HttpStatus.OK)
+  async removeAllActiveListingsForSeller(
+    @Param('sellerId', ParseUUIDPipe) sellerId: string,
+    @Body() body: RemoveAllActiveListingsDto,
+  ) {
+    const data = await this.sellerListingsRemovalService.removeAllActiveListings(
+      sellerId,
+      {
+        moderatorId: body.moderatorId,
+        note: body.note,
+        source: 'uc38_admin_api',
+      },
+    );
+    return {
+      success: true,
+      message: data.empty
+        ? data.message
+        : `Da go ${data.count} tin dang active`,
+      data,
+    };
+  }
+
+  /**
+   * GET /api/v1/listings/admin/sellers/:sellerId/bulk-listing-removals
+   * UC38 bước 4 — lịch sử thao tác gỡ tin hàng loạt theo seller.
+   */
+  @Get('admin/sellers/:sellerId/bulk-listing-removals')
+  async listBulkListingRemovalsBySeller(
+    @Param('sellerId', ParseUUIDPipe) sellerId: string,
+  ) {
+    const items =
+      await this.uc38RemovalAuditReadRepository.findBySellerId(sellerId);
+    return {
+      total: items.length,
+      items,
+    };
+  }
+
+  /**
+   * GET /api/v1/listings/admin/bulk-listing-removals
+   * UC38 — toàn bộ lịch sử gỡ tin hàng loạt (dashboard QTV).
+   */
+  @Get('admin/bulk-listing-removals')
+  async listAllBulkListingRemovals() {
+    const items = await this.uc38RemovalAuditReadRepository.findAll();
+    return {
+      total: items.length,
+      items,
     };
   }
 

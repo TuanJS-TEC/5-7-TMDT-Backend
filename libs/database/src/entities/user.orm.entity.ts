@@ -39,6 +39,10 @@ export class UserOrmEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   adminLockReason?: string | null;
 
+  /** UC37 — thời điểm hết hạn khóa (nếu có); null = khóa không thời hạn */
+  @Column({ type: 'timestamptz', nullable: true })
+  adminLockUntil?: Date | null;
+
   /** Đếm sai mật khẩu liên tiếp (A1) */
   @Column({ type: 'int', default: 0 })
   failedLoginAttempts!: number;

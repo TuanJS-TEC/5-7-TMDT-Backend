@@ -34,6 +34,9 @@ export class ListingReadRepository {
       modificationRequestDetails: r.modificationRequestDetails,
       modificationRequestedBy: r.modificationRequestedBy,
       modificationRequestedAt: r.modificationRequestedAt?.toISOString(),
+      removedAt: r.removedAt?.toISOString(),
+      removedBy: r.removedBy,
+      adminRemovalReason: r.adminRemovalReason,
     };
   }
 
