@@ -17,6 +17,7 @@ export class ListingCreatedHandler
       listingId: event.listingId,
       sellerId: event.sellerId,
       title: event.title,
+      packageType: event.packageType,
       occurredAt: event.occurredAt.toISOString(),
     });
     this.logger.log(`Listing created: ${event.listingId}`);

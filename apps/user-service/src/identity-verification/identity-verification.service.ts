@@ -17,7 +17,7 @@ import type {
 
 @Injectable()
 export class IdentityVerificationService {
-  constructor(private readonly store: IdentityVerificationMockStore) {}
+  constructor(private readonly store: IdentityVerificationMockStore) { }
 
   submitRequest(dto: SubmitIdentityVerificationDto) {
     const user = this.store.users.get(dto.userId);

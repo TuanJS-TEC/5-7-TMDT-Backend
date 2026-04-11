@@ -3,8 +3,8 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: car
-      POSTGRES_PASSWORD: car
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
       POSTGRES_DB: car_marketplace
     ports:
       - "5432:5432"
