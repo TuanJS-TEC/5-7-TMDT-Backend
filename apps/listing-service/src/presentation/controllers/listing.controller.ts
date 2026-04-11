@@ -45,6 +45,8 @@ import { RemoveFavoriteCommand } from '../../application/commands/remove-favorit
 import { GetFavoriteListingsQuery } from '../../application/queries/get-favorite-listings/get-favorite-listings.query';
 import { ConfigService } from '@nestjs/config'; // Thêm ConfigService để lấy URL của Auth Service
 import { ProfileService } from '../../infrastructure/auth/profile.service';
+import { ProcessReportDto } from '../dto/process-report.dto';
+import { ReportModerationService } from '../../application/services/report-moderation.service';
 
 @Controller({ path: 'listings', version: '1' })
 export class ListingController {
@@ -53,6 +55,7 @@ export class ListingController {
     private readonly queryBus: QueryBus,
     private readonly listingReadRepository: ListingReadRepository, // Để truy cập trực tiếp cho UC4
     private readonly profileService: ProfileService, // Inject ProfileService để lấy thông tin người bán
+    private readonly reportModerationService: ReportModerationService,
   ) {}
 
   /**
@@ -231,6 +234,44 @@ export class ListingController {
       success: true,
       message: 'Da gui yeu cau seller chinh sua tin dang',
       data: result,
+    };
+  }
+
+  /**
+   * GET /api/v1/listings/admin/reports
+   * UC35 bước 1 — QTV xem danh sách report vi phạm
+   */
+  @Get('admin/reports')
+  async listReports(
+    @Query('status') status?: 'pending' | 'processed',
+  ) {
+    return this.reportModerationService.listReports(status);
+  }
+
+  /**
+   * GET /api/v1/listings/admin/reports/:reportId
+   * UC35 bước 2 — QTV xem chi tiết report + bằng chứng
+   */
+  @Get('admin/reports/:reportId')
+  async getReportDetail(@Param('reportId', ParseUUIDPipe) reportId: string) {
+    return this.reportModerationService.getReportDetail(reportId);
+  }
+
+  /**
+   * PATCH /api/v1/listings/admin/reports/:reportId/process
+   * UC35 bước 3-4-5 — QTV ra quyết định xử lý và hệ thống thông báo kết quả
+   */
+  @Patch('admin/reports/:reportId/process')
+  @HttpCode(HttpStatus.OK)
+  async processReport(
+    @Param('reportId', ParseUUIDPipe) reportId: string,
+    @Body() body: ProcessReportDto,
+  ) {
+    const data = await this.reportModerationService.processReport(reportId, body);
+    return {
+      success: true,
+      message: 'Da xu ly bao cao vi pham',
+      data,
     };
   }
 

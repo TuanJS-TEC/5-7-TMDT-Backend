@@ -36,6 +36,7 @@ import { ReportReadRepository } from './infrastructure/persistence/read/report.r
 import { ReportWriteRepository } from './infrastructure/persistence/write/report.write.repository';
 import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
 import { ReportRecord } from './infrastructure/persistence/report-record';
+import { createMockReportStore } from './infrastructure/persistence/mock-report.store';
 import { ProfileService } from './infrastructure/auth/profile.service';
 import { CompareListingsHandler } from './application/queries/compare-listings/compare-listings.handler';
 import { FavoriteReadRepository } from './infrastructure/persistence/read/favorite.read.repository';
@@ -46,6 +47,8 @@ import { GetFavoriteListingsHandler } from './application/queries/get-favorite-l
 import { ConfigModule } from '@nestjs/config';
 import { PaymentPackagePaidConsumer } from './infrastructure/messaging/payment-package-paid.consumer';
 import { PaymentRefundCompletedConsumer } from './infrastructure/messaging/payment-refund-completed.consumer';
+import { ReportModerationService } from './application/services/report-moderation.service';
+import { ReportNotificationService } from './application/services/report-notification.service';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -101,7 +104,7 @@ const typeOrmListing =
     },
     {
       provide: REPORT_STORE,
-      useValue: new Map<string, ReportRecord>(),
+      useFactory: createMockReportStore,
     },
     ListingWriteRepository,
     ListingReadRepository,
@@ -117,6 +120,8 @@ const typeOrmListing =
     PaymentPackagePaidConsumer,
     PaymentRefundCompletedConsumer,
     ProfileService,
+    ReportModerationService,
+    ReportNotificationService,
     ...commandHandlers,
     ...queryHandlers,
     ...eventHandlers,
