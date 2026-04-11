@@ -32,6 +32,9 @@ export class ListingWriteRepository {
         | 'status'
         | 'approvedAt'
         | 'rejectionReason'
+        | 'modificationRequestDetails'
+        | 'modificationRequestedBy'
+        | 'modificationRequestedAt'
         | 'packageType'
         | 'imageUrls'
         | 'carMake'
@@ -85,6 +88,28 @@ export class ListingWriteRepository {
       ...existing,
       status: 'rejected',
       rejectionReason: reason,
+      updatedAt: now,
+    };
+    this.store.set(id, updated);
+  }
+
+  /** UC33 — QTV yêu cầu seller chỉnh sửa trước khi duyệt */
+  async requestModification(
+    id: string,
+    moderatorId: string,
+    details: string,
+  ): Promise<void> {
+    const existing = this.store.get(id);
+    if (!existing) {
+      return;
+    }
+    const now = new Date();
+    const updated: ListingRecord = {
+      ...existing,
+      status: 'modification_requested',
+      modificationRequestedBy: moderatorId,
+      modificationRequestDetails: details,
+      modificationRequestedAt: now,
       updatedAt: now,
     };
     this.store.set(id, updated);

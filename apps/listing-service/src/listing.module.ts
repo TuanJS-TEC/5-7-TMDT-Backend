@@ -10,12 +10,14 @@ import { UpdateListingCommand } from './application/commands/update-listing/upda
 import { ApproveListingHandler } from './application/commands/approve-listing/approve-listing.handler';
 import { RejectListingHandler } from './application/commands/reject-listing/reject-listing.handler';
 import { DeleteListingHandler } from './application/commands/delete-listing/delete-listing.handler';
+import { RequestModificationHandler } from './application/commands/request-modification/request-modification.handler';
 import { GetListingDetailHandler } from './application/queries/get-listing-detail/get-listing-detail.handler';
 import { GetListingListHandler } from './application/queries/get-listing-list/get-listing-list.handler';
 import { GetSellerListingsHandler } from './application/queries/get-seller-listings/get-seller-listings.handler';
 import { ListingCreatedHandler } from './application/events/listing-created/listing-created.handler';
 import { ListingApprovedHandler } from './application/events/listing-approved/listing-approved.handler';
 import { ListingRejectedHandler } from './application/events/listing-rejected/listing-rejected.handler';
+import { ListingModificationRequestedHandler } from './application/events/listing-modification-requested/listing-modification-requested.handler';
 import { ListingWriteRepository } from './infrastructure/persistence/write/listing.write.repository';
 import { ListingReadRepository } from './infrastructure/persistence/read/listing.read.repository';
 import { RabbitMqPublisher } from './infrastructure/messaging/rabbitmq.publisher';
@@ -51,6 +53,7 @@ const commandHandlers = [
   ApproveListingHandler,
   /** UC16 A1 — admin từ chối bài đăng */
   RejectListingHandler,
+  RequestModificationHandler,
   DeleteListingHandler,
   ShareListingHandler,
   ReportListingHandler,
@@ -73,6 +76,8 @@ const eventHandlers = [
   ListingApprovedHandler,
   /** UC16 A1 — publish listing.rejected event → notification-service */
   ListingRejectedHandler,
+  /** UC33 — publish listing.modification_requested event → notification-service */
+  ListingModificationRequestedHandler,
 ];
 
 const typeOrmListing =

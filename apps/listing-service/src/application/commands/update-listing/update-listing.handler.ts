@@ -23,7 +23,9 @@ export class UpdateListingHandler
     }
 
     const shouldResubmitForModeration =
-      existing.status === 'approved' || existing.status === 'rejected';
+      existing.status === 'approved' ||
+      existing.status === 'rejected' ||
+      existing.status === 'modification_requested';
 
     await this.writeRepo.update(command.id, {
       title: command.title ?? existing.title,
@@ -34,6 +36,15 @@ export class UpdateListingHandler
       rejectionReason: shouldResubmitForModeration
         ? undefined
         : existing.rejectionReason,
+      modificationRequestDetails: shouldResubmitForModeration
+        ? undefined
+        : existing.modificationRequestDetails,
+      modificationRequestedBy: shouldResubmitForModeration
+        ? undefined
+        : existing.modificationRequestedBy,
+      modificationRequestedAt: shouldResubmitForModeration
+        ? undefined
+        : existing.modificationRequestedAt,
     });
   }
 }

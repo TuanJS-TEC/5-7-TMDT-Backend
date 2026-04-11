@@ -31,6 +31,9 @@ export class ListingReadRepository {
       updatedAt: r.updatedAt.toISOString(),
       approvedAt: r.approvedAt?.toISOString(),
       rejectionReason: r.rejectionReason,
+      modificationRequestDetails: r.modificationRequestDetails,
+      modificationRequestedBy: r.modificationRequestedBy,
+      modificationRequestedAt: r.modificationRequestedAt?.toISOString(),
     };
   }
 
