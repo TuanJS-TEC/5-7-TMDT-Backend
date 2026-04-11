@@ -30,6 +30,8 @@ export class ListingWriteRepository {
         | 'description'
         | 'priceVnd'
         | 'status'
+        | 'approvedAt'
+        | 'rejectionReason'
         | 'packageType'
         | 'imageUrls'
         | 'carMake'
