@@ -6,5 +6,6 @@ export class CreatePaymentOrderCommand {
     public readonly listingPackageType: string,
     public readonly paymentMethod: PaymentMethodType,
     public readonly amountVnd: number,
+    public readonly listingId: string | null,
   ) {}
 }

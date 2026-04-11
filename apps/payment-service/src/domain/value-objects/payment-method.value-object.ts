@@ -1,9 +1,12 @@
 export type PaymentMethodType =
   | 'bank_transfer'
+  | 'qr_banking'
   | 'momo'
   | 'vnpay'
   | 'zalopay'
-  | 'credit_card';
+  | 'credit_card'
+  /** UC30 — ATM / Internet Banking qua cổng trung gian (demo sandbox) */
+  | 'atm_internet_banking';
 
 export interface PaymentMethodInfo {
   type: PaymentMethodType;
@@ -16,6 +19,22 @@ export interface PaymentMethodInfo {
 /** UC27 — Danh sách các phương thức thanh toán có sẵn */
 export const PAYMENT_METHODS: PaymentMethodInfo[] = [
   {
+    type: 'atm_internet_banking',
+    name: 'ATM / Internet Banking (sandbox demo)',
+    description:
+      'UC30 — Thanh toán qua cổng trung gian (VNPay/PayOS-style). Demo nội bộ, không kết nối ngân hàng thật.',
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/2830/2830284.png',
+    isActive: true,
+  },
+  {
+    type: 'zalopay',
+    name: 'ZaloPay (sandbox demo)',
+    description:
+      'UC29 — Luồng ví điện tử (thử nghiệm: cổng Demo Wallet nội bộ, không gọi API ZaloPay thật).',
+    iconUrl: 'https://upload.wikimedia.org/wikipedia/vi/2/2d/ZaloPay_logo.png',
+    isActive: true,
+  },
+  {
     type: 'vnpay',
     name: 'Thanh toán qua VNPAY',
     description: 'Thanh toán quét mã QR qua ứng dụng ngân hàng hoặc ví VNPAY',
@@ -24,8 +43,9 @@ export const PAYMENT_METHODS: PaymentMethodInfo[] = [
   },
   {
     type: 'momo',
-    name: 'Ví MoMo',
-    description: 'Thanh toán một chạm qua ví điện tử MoMo',
+    name: 'Ví MoMo (sandbox demo)',
+    description:
+      'UC29 — Luồng ví điện tử (thử nghiệm: cổng Demo Wallet nội bộ, không gọi API MoMo thật).',
     iconUrl: 'https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png',
     isActive: true,
   },
@@ -34,6 +54,13 @@ export const PAYMENT_METHODS: PaymentMethodInfo[] = [
     name: 'Chuyển khoản ngân hàng',
     description: 'Chuyển tiền trực tiếp vào tài khoản ngân hàng của hệ thống',
     iconUrl: 'https://cdn-icons-png.flaticon.com/512/2830/2830284.png',
+    isActive: true,
+  },
+  {
+    type: 'qr_banking',
+    name: 'QR Banking (VietQR)',
+    description: 'Quét mã VietQR bằng app ngân hàng để thanh toán',
+    iconUrl: 'https://vietqr.net/img/vietqr-logo.svg',
     isActive: true,
   },
   {

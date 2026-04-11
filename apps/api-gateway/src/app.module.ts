@@ -53,5 +53,34 @@ export class AppModule implements NestModule { // Thực hiện NestModule
         }),
       )
       .forRoutes('/api/v1/auth*');
+
+    const paymentServiceUrl =
+      this.configService.get<string>('PAYMENT_SERVICE_URL') ??
+      'http://localhost:3004';
+
+    consumer
+      .apply(
+        createProxyMiddleware({
+          target: paymentServiceUrl,
+          changeOrigin: true,
+          pathRewrite: {
+            '^/api/v1/payments': '/v1/payments',
+          },
+        }),
+      )
+      .forRoutes('/api/v1/payments*');
+
+    // UC31 — webhook thống nhất: /api/v1/payment/webhook
+    consumer
+      .apply(
+        createProxyMiddleware({
+          target: paymentServiceUrl,
+          changeOrigin: true,
+          pathRewrite: {
+            '^/api/v1/payment': '/v1/payment',
+          },
+        }),
+      )
+      .forRoutes('/api/v1/payment*');
   }
 }

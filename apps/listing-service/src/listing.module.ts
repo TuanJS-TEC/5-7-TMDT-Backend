@@ -19,9 +19,12 @@ import { ListingRejectedHandler } from './application/events/listing-rejected/li
 import { ListingWriteRepository } from './infrastructure/persistence/write/listing.write.repository';
 import { ListingReadRepository } from './infrastructure/persistence/read/listing.read.repository';
 import { RabbitMqPublisher } from './infrastructure/messaging/rabbitmq.publisher';
-import { LISTING_STORE } from './infrastructure/persistence/listing.store.token';
+import { FAVORITE_STORE, LISTING_STORE } from './infrastructure/persistence/listing.store.token';
 import type { ListingRecord } from './infrastructure/persistence/listing-record';
-import { createMockListingStore } from './infrastructure/persistence/mock-listing.store';
+import {
+  createMockFavoriteStore,
+  createMockListingStore,
+} from './infrastructure/persistence/mock-listing.store';
 import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler'; 
 import { FilterListingsHandler } from './application/queries/filter-listings/filter-listings.handler';
 import { GetListingPackagesHandler } from './application/queries/get-listing-packages/get-listing-packages.handler';
@@ -33,15 +36,14 @@ import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
 import { ReportRecord } from './infrastructure/persistence/report-record';
 import { ProfileService } from './infrastructure/auth/profile.service';
 import { CompareListingsHandler } from './application/queries/compare-listings/compare-listings.handler';
-import { FAVORITE_STORE } from './infrastructure/persistence/listing.store.token';
-import { createMockFavoriteStore } from './infrastructure/persistence/mock-favorite.store';
 import { FavoriteReadRepository } from './infrastructure/persistence/read/favorite.read.repository';
 import { FavoriteWriteRepository } from './infrastructure/persistence/write/favorite.write.repository';
 import { AddFavoriteHandler } from './application/commands/add-favorite/add-favorite.handler';
 import { RemoveFavoriteHandler } from './application/commands/remove-favorite/remove-favorite.handler';
 import { GetFavoriteListingsHandler } from './application/queries/get-favorite-listings/get-favorite-listings.handler';
 import { ConfigModule } from '@nestjs/config';
-import { ProfileService } from './infrastructure/auth/profile.service';
+import { PaymentPackagePaidConsumer } from './infrastructure/messaging/payment-package-paid.consumer';
+import { PaymentRefundCompletedConsumer } from './infrastructure/messaging/payment-refund-completed.consumer';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -100,14 +102,15 @@ const typeOrmListing =
     ListingReadRepository,
     ReportReadRepository,
     ReportWriteRepository,
+    {
       provide: FAVORITE_STORE,
       useFactory: createMockFavoriteStore,
     },
-    ListingWriteRepository,
-    ListingReadRepository,
     FavoriteReadRepository,
     FavoriteWriteRepository,
     RabbitMqPublisher,
+    PaymentPackagePaidConsumer,
+    PaymentRefundCompletedConsumer,
     ProfileService,
     ...commandHandlers,
     ...queryHandlers,
