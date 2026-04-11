@@ -32,6 +32,12 @@ export interface ListingRecord {
   approvedAt?: Date;
   /** UC16 A1 — lý do từ chối */
   rejectionReason?: string;
+  /** UC33 — chi tiết yêu cầu seller chỉnh sửa */
+  modificationRequestDetails?: string;
+  /** UC33 — quản trị viên yêu cầu sửa */
+  modificationRequestedBy?: string;
+  /** UC33 — thời điểm yêu cầu sửa */
+  modificationRequestedAt?: Date;
   /** UC17 — số lần AI từ chối ảnh */
   imageAiFailureCount?: number;
   /** UC17 — có ảnh đang chờ QTV duyệt thủ công không */

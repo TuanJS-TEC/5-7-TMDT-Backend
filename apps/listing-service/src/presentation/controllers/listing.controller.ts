@@ -22,11 +22,13 @@ import { UpdateListingDto } from '../dto/update-listing.dto';
 import { DeleteListingDto } from '../dto/delete-listing.dto';
 import { ApproveListingDto } from '../dto/approve-listing.dto';
 import { RejectListingDto } from '../dto/reject-listing.dto';
+import { RequestModificationDto } from '../dto/request-modification.dto';
 import { ReportListingDto } from '../dto/report-listing.dto';
 import { CreateListingCommand } from '../../application/commands/create-listing/create-listing.command';
 import { UpdateListingCommand } from '../../application/commands/update-listing/update-listing.command';
 import { ApproveListingCommand } from '../../application/commands/approve-listing/approve-listing.command';
 import { RejectListingCommand } from '../../application/commands/reject-listing/reject-listing.command';
+import { RequestModificationCommand } from '../../application/commands/request-modification/request-modification.command';
 import { DeleteListingCommand } from '../../application/commands/delete-listing/delete-listing.command';
 import { GetListingDetailQuery } from '../../application/queries/get-listing-detail/get-listing-detail.query';
 import { GetListingListQuery } from '../../application/queries/get-listing-list/get-listing-list.query';
@@ -207,6 +209,27 @@ export class ListingController {
     return {
       success: true,
       message: 'Da tu choi tin dang',
+      data: result,
+    };
+  }
+
+  /**
+   * PATCH /api/v1/listings/admin/moderation/:id/request-modification
+   * UC33 bước 2-3 — QTV yêu cầu seller chỉnh sửa tin đăng
+   */
+  @Patch('admin/moderation/:id/request-modification')
+  @HttpCode(HttpStatus.OK)
+  async requestModificationFromModeration(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RequestModificationDto,
+  ) {
+    const result = await this.commandBus.execute(
+      new RequestModificationCommand(id, dto.moderatorId, dto.details),
+    );
+
+    return {
+      success: true,
+      message: 'Da gui yeu cau seller chinh sua tin dang',
       data: result,
     };
   }

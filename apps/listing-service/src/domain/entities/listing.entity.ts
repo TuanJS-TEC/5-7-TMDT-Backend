@@ -4,6 +4,7 @@ export type ListingPackageType = 'basic' | 'premium' | 'vip';
 export type ListingStatus =
   | 'draft'
   | 'pending'
+  | 'modification_requested'
   | 'approved'
   | 'rejected'
   | 'sold';

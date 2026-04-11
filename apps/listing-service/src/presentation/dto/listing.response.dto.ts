@@ -25,4 +25,10 @@ export interface ListingResponseDto {
   approvedAt?: string;
   /** UC16 A1 — lý do từ chối */
   rejectionReason?: string;
+  /** UC33 — chi tiết quản trị viên yêu cầu seller chỉnh sửa */
+  modificationRequestDetails?: string;
+  /** UC33 — quản trị viên đã yêu cầu sửa */
+  modificationRequestedBy?: string;
+  /** UC33 — thời điểm yêu cầu sửa */
+  modificationRequestedAt?: string;
 }
