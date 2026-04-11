@@ -117,6 +117,101 @@ export class ListingController {
   }
 
   /**
+   * GET /api/v1/listings/admin/moderation/pending
+   * UC32 bước 1 — QTV xem danh sách tin đang chờ duyệt
+   */
+  @Get('admin/moderation/pending')
+  async getPendingModerationListings(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('sortBy', new DefaultValuePipe('createdAt')) sortBy: string,
+    @Query('sortOrder', new DefaultValuePipe('desc')) sortOrder: 'asc' | 'desc',
+  ) {
+    const result = await this.queryBus.execute(
+      new GetListingListQuery(page, limit, 'pending', sortBy, sortOrder),
+    );
+
+    return {
+      ...result,
+      items: result.items.map((item) => ({
+        ...item,
+        moderationStatus: 'pending',
+      })),
+    };
+  }
+
+  /**
+   * GET /api/v1/listings/admin/moderation/pending/:id
+   * UC32 bước 2 — QTV xem chi tiết tin + bằng chứng ảnh/CCCD (mock)
+   */
+  @Get('admin/moderation/pending/:id')
+  async getPendingModerationDetail(@Param('id', ParseUUIDPipe) id: string) {
+    const listing = await this.queryBus.execute(new GetListingDetailQuery(id));
+    if (!listing || listing.status !== 'pending') {
+      throw new NotFoundException(
+        'Tin dang khong ton tai hoac khong o trang thai cho duyet',
+      );
+    }
+
+    const seller = await this.profileService.getPublicSellerProfile(listing.sellerId);
+
+    return {
+      ...listing,
+      moderationStatus: 'pending',
+      seller,
+      evidence: {
+        listingImages: listing.imageUrls,
+        identityDocument: {
+          verificationStatus: seller?.identityVerificationStatus ?? 'unknown',
+          documentUrl: seller?.identityDocumentUrl ?? null,
+        },
+      },
+    };
+  }
+
+  /**
+   * PATCH /api/v1/listings/admin/moderation/:id/approve
+   * UC32 bước 3 — QTV duyệt tin => Active (internal: approved)
+   */
+  @Patch('admin/moderation/:id/approve')
+  @HttpCode(HttpStatus.OK)
+  async approveFromModeration(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ApproveListingDto,
+  ) {
+    const result = await this.commandBus.execute(
+      new ApproveListingCommand(id, dto.moderatorId),
+    );
+
+    return {
+      success: true,
+      message: 'Da duyet tin dang thanh cong',
+      data: result,
+    };
+  }
+
+  /**
+   * PATCH /api/v1/listings/admin/moderation/:id/reject
+   * UC32 bước 4 — QTV từ chối tin => Rejected
+   */
+  @Patch('admin/moderation/:id/reject')
+  @HttpCode(HttpStatus.OK)
+  async rejectFromModeration(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RejectListingDto,
+  ) {
+    const result = await this.commandBus.execute(
+      new RejectListingCommand(id, dto.moderatorId, dto.reason),
+    );
+
+    return {
+      success: true,
+      message: 'Da tu choi tin dang',
+      data: result,
+    };
+  }
+
+  /**
    * POST /api/v1/listings/:id/share
    * UC9 — Chia sẻ tin đăng (Cập nhật shareCount và trả về link)
    */
@@ -416,13 +511,19 @@ export class ListingController {
    */
   @Post(':id/approve')
   @HttpCode(HttpStatus.OK)
-  approve(
+  async approve(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ApproveListingDto,
   ) {
-    return this.commandBus.execute(
+    const result = await this.commandBus.execute(
       new ApproveListingCommand(id, dto.moderatorId),
     );
+
+    return {
+      success: true,
+      message: 'Da duyet tin dang thanh cong',
+      data: result,
+    };
   }
 
   /**
@@ -433,13 +534,19 @@ export class ListingController {
    */
   @Post(':id/reject')
   @HttpCode(HttpStatus.OK)
-  reject(
+  async reject(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RejectListingDto,
   ) {
-    return this.commandBus.execute(
+    const result = await this.commandBus.execute(
       new RejectListingCommand(id, dto.moderatorId, dto.reason),
     );
+
+    return {
+      success: true,
+      message: 'Da tu choi tin dang',
+      data: result,
+    };
   }
 
   /**
