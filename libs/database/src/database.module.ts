@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmModuleOptions } from './config/typeorm.config';
 
 function useDatabase(): boolean {
-  return process.env.SKIP_DATABASE !== 'true';
+  return process.env.SKIP_DATABASE?.trim() !== 'true';
 }
 
 @Module({

@@ -23,7 +23,11 @@ describe('RegisterService', () => {
   };
   let dataSource: { transaction: jest.Mock };
   let sessions: { issueSession: jest.Mock };
-  let otp: { issue: jest.Mock; verifyAndConsume: jest.Mock };
+  let otp: {
+    issue: jest.Mock;
+    verifyAndConsume: jest.Mock;
+    removeChallenge: jest.Mock;
+  };
 
   beforeEach(async () => {
     users = {
@@ -65,6 +69,7 @@ describe('RegisterService', () => {
         message: 'sent',
       }),
       verifyAndConsume: jest.fn().mockResolvedValue(undefined),
+      removeChallenge: jest.fn().mockResolvedValue(undefined),
     };
 
     const module: TestingModule = await Test.createTestingModule({

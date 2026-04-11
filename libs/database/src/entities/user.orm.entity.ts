@@ -39,6 +39,10 @@ export class UserOrmEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   adminLockReason?: string | null;
 
+  /** UC37 — thời điểm hết hạn khóa (nếu có); null = khóa không thời hạn */
+  @Column({ type: 'timestamptz', nullable: true })
+  adminLockUntil?: Date | null;
+
   /** Đếm sai mật khẩu liên tiếp (A1) */
   @Column({ type: 'int', default: 0 })
   failedLoginAttempts!: number;
@@ -52,4 +56,20 @@ export class UserOrmEntity extends BaseEntity {
 
   @Column({ type: 'varchar', length: 512, nullable: true })
   lastLoginUserAgent?: string | null;
+
+  /** UC15 — địa chỉ hiển thị / liên hệ */
+  @Column({ type: 'varchar', length: 500, default: '' })
+  address!: string;
+
+  /** UC15 — mô tả showroom / giới thiệu */
+  @Column({ type: 'text', default: '' })
+  sellerDescription!: string;
+
+  /** UC15 A1 — URL ảnh (upload local hoặc CDN) */
+  @Column({ type: 'varchar', length: 1024, nullable: true })
+  avatarUrl?: string | null;
+
+  /** UC15 — SĐT hiển thị công khai (khác SĐT đăng nhập nếu cần) */
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  displayPhone?: string | null;
 }
