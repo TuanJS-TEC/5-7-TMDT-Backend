@@ -34,6 +34,7 @@ import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
 import { ReportRecord } from './infrastructure/persistence/report-record';
 import { ProfileService } from './infrastructure/auth/profile.service';
 import { CompareListingsHandler } from './application/queries/compare-listings/compare-listings.handler';
+import { GetListingStatsHandler } from './application/queries/get-listing-stats/get-listing-stats.handler';
 import { FavoriteReadRepository } from './infrastructure/persistence/read/favorite.read.repository';
 import { FavoriteWriteRepository } from './infrastructure/persistence/write/favorite.write.repository';
 import { AddFavoriteHandler } from './application/commands/add-favorite/add-favorite.handler';
@@ -79,6 +80,7 @@ const queryHandlers = [
   GetListingPackagesHandler,
   CompareListingsHandler,
   GetFavoriteListingsHandler,
+  GetListingStatsHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,

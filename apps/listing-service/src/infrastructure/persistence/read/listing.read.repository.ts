@@ -53,6 +53,29 @@ export class ListingReadRepository {
       .map((r) => this.toDto(r));
   }
 
+  // UC20 — Thống kê tổng hợp tin đăng
+  async getStats(): Promise<{
+    total: number;
+    byStatus: Record<string, number>;
+    byPackage: Record<string, number>;
+    byMake: Record<string, number>;
+  }> {
+    const all = [...this.store.values()];
+    const total = all.length;
+
+    const byStatus: Record<string, number> = {};
+    const byPackage: Record<string, number> = {};
+    const byMake: Record<string, number> = {};
+
+    for (const r of all) {
+      byStatus[r.status] = (byStatus[r.status] ?? 0) + 1;
+      byPackage[r.packageType] = (byPackage[r.packageType] ?? 0) + 1;
+      byMake[r.carMake] = (byMake[r.carMake] ?? 0) + 1;
+    }
+
+    return { total, byStatus, byPackage, byMake };
+  }
+
   /** UC17 — trả về raw records để listing-image.service lọc manual review */
   async findAllRecords(): Promise<ListingRecord[]> {
     return [...this.store.values()];
