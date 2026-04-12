@@ -4,6 +4,8 @@ import { join } from 'path';
 import { OtpModule } from './otp/otp.module';
 import { RegisterModule } from './register/register.module';
 import { HealthController } from './health.controller';
+import { DatabaseModule } from '@car-marketplace/database';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { HealthController } from './health.controller';
     }),
     OtpModule,
     RegisterModule,
+    DatabaseModule,
+    AuthModule,
   ],
   controllers: [HealthController],
 })

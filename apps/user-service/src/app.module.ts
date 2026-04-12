@@ -4,6 +4,9 @@ import { join } from 'path';
 import { DatabaseModule } from '@car-marketplace/database';
 import { UsersModule } from './users/users.module';
 import { HealthController } from './health.controller';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { IdentityVerificationModule } from './identity-verification/identity-verification.module';
 
 @Module({
   imports: [
@@ -17,7 +20,9 @@ import { HealthController } from './health.controller';
     }),
     DatabaseModule,
     UsersModule.forRoot(),
+    IdentityVerificationModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, AppController],
+  providers: [AppService],
 })
 export class AppModule {}

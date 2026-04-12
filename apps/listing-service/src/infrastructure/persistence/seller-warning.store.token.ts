@@ -1,0 +1,1 @@
+export const SELLER_WARNING_STORE = Symbol('SELLER_WARNING_STORE');

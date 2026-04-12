@@ -19,11 +19,13 @@
     "start:user": "npm run start:dev -w user-service"
   },
   "dependencies": {
+    "@nestjs/axios": "^4.0.1",
     "@nestjs/config": "^4.0.0",
     "@nestjs/cqrs": "^11.0.1",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/microservices": "^11.0.1",
     "@nestjs/passport": "^11.0.0",
+    "@nestjs/schedule": "^5.0.1",
     "@nestjs/typeorm": "^11.0.0",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.5",
@@ -42,7 +44,10 @@
   "devDependencies": {
     "@types/amqplib": "^0.10.6",
     "@types/bcryptjs": "^2.4.6",
-    "@types/pg": "^8.11.10"
+    "@types/pg": "^8.11.10",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.9",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20"
