@@ -1,22 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { MOCK_USERS, UserAccount } from './user-management.mock';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserOrmEntity } from '../../../../libs/database/src/entities/user.orm.entity';
 
 @Injectable()
 export class UserManagementService {
-  private users = new Map<string, UserAccount>(MOCK_USERS.map(u => [u.id, { ...u }]));
+  constructor(
+    @InjectRepository(UserOrmEntity)
+    private readonly userRepository: Repository<UserOrmEntity>,
+  ) {}
 
   /**
    * UC43: Lấy danh sách người dùng
    */
-  findAll() {
-    return Array.from(this.users.values());
+  async findAll() {
+    return this.userRepository.find({
+      order: { createdAt: 'DESC' },
+    });
   }
 
   /**
    * UC43: Lấy chi tiết người dùng
    */
-  findOne(id: string) {
-    const user = this.users.get(id);
+  async findOne(id: string) {
+    const user = await this.userRepository.findOneBy({ id });
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
     return user;
   }
@@ -24,13 +31,17 @@ export class UserManagementService {
   /**
    * UC43: Cập nhật trạng thái người dùng (Ban/Unban)
    */
-  updateStatus(id: string, status: 'active' | 'banned') {
-    const user = this.users.get(id);
+  async updateStatus(id: string, status: 'active' | 'banned') {
+    const user = await this.userRepository.findOneBy({ id });
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
     
-    user.status = status;
-    this.users.set(id, user);
+    user.adminLocked = (status === 'banned');
+    await this.userRepository.save(user);
     
-    return { success: true, message: `Người dùng đã được chuyển sang trạng thái ${status}`, user };
+    return { 
+      success: true, 
+      message: `Người dùng đã được chuyển sang trạng thái ${status}`, 
+      user 
+    };
   }
 }
