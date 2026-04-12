@@ -40,6 +40,7 @@ import { GetListingPackagesQuery } from '../../application/queries/get-listing-p
 import { ShareListingCommand } from '../../application/commands/share-listing/share-listing.command';
 import { ReportListingCommand } from '../../application/commands/report-listing/report-listing.command';
 import { CompareListingsQuery } from '../../application/queries/compare-listings/compare-listings.query';
+import { GetListingStatsQuery } from '../../application/queries/get-listing-stats/get-listing-stats.query';
 import { AddFavoriteCommand } from '../../application/commands/add-favorite/add-favorite.command';
 import { RemoveFavoriteCommand } from '../../application/commands/remove-favorite/remove-favorite.command';
 import { GetFavoriteListingsQuery } from '../../application/queries/get-favorite-listings/get-favorite-listings.query';
@@ -499,6 +500,16 @@ export class ListingController {
 
     const listings = await this.queryBus.execute(new CompareListingsQuery(ids));
     return listings;
+  }
+
+  /**
+   * GET /api/v1/listings/stats
+   * UC20: Xem thống kê tin đăng
+   */
+  @Get('stats')
+  async getStats() {
+    console.log('Mock: Tracking - Admin đang xem thống kê tin đăng');
+    return this.queryBus.execute(new GetListingStatsQuery());
   }
 
   /**
