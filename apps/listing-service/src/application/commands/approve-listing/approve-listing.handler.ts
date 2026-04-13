@@ -13,15 +13,26 @@ export class ApproveListingHandler
     private readonly eventBus: EventBus,
   ) {}
 
-  async execute(command: ApproveListingCommand): Promise<void> {
+  async execute(command: ApproveListingCommand): Promise<{
+    listingId: string;
+    status: 'active';
+    internalStatus: 'approved';
+  }> {
     const existing = await this.writeRepo.findById(command.id);
     if (!existing) {
       throw new BadRequestException('Listing not found');
     }
+
+    if (existing.status !== 'pending') {
+      throw new BadRequestException(
+        `Chi duoc duyet tin dang dang o trang thai pending (hien tai: ${existing.status})`,
+      );
+    }
+
     await this.writeRepo.approve(command.id);
     const updated = await this.writeRepo.findById(command.id);
     if (!updated) {
-      return;
+      throw new BadRequestException('Khong the cap nhat trang thai tin dang');
     }
     this.eventBus.publish(
       new ListingApprovedEvent(
@@ -30,5 +41,11 @@ export class ApproveListingHandler
         updated.approvedAt ?? new Date(),
       ),
     );
+
+    return {
+      listingId: updated.id,
+      status: 'active',
+      internalStatus: 'approved',
+    };
   }
 }

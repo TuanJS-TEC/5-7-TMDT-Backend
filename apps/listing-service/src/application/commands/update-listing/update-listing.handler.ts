@@ -17,10 +17,41 @@ export class UpdateListingHandler
     if (existing.sellerId !== command.sellerId) {
       throw new ForbiddenException();
     }
+
+    if (existing.status === 'sold') {
+      throw new BadRequestException('Sold listing cannot be edited');
+    }
+
+    if (existing.status === 'removed') {
+      throw new BadRequestException({
+        code: 'LISTING_REMOVED_BY_ADMIN',
+        message: 'Tin da bi go hien thi boi quan tri, khong the chinh sua.',
+      });
+    }
+
+    const shouldResubmitForModeration =
+      existing.status === 'approved' ||
+      existing.status === 'rejected' ||
+      existing.status === 'modification_requested';
+
     await this.writeRepo.update(command.id, {
       title: command.title ?? existing.title,
       description: command.description ?? existing.description,
       priceVnd: command.priceVnd ?? existing.priceVnd,
+      status: shouldResubmitForModeration ? 'pending' : existing.status,
+      approvedAt: shouldResubmitForModeration ? undefined : existing.approvedAt,
+      rejectionReason: shouldResubmitForModeration
+        ? undefined
+        : existing.rejectionReason,
+      modificationRequestDetails: shouldResubmitForModeration
+        ? undefined
+        : existing.modificationRequestDetails,
+      modificationRequestedBy: shouldResubmitForModeration
+        ? undefined
+        : existing.modificationRequestedBy,
+      modificationRequestedAt: shouldResubmitForModeration
+        ? undefined
+        : existing.modificationRequestedAt,
     });
   }
 }

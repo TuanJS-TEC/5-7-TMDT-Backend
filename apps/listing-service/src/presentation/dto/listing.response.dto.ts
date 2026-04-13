@@ -32,4 +32,14 @@ export interface ListingResponseDto {
   pushedAt?: string;
   isFeatured?: boolean;
   featuredUntil?: string;
+  /** UC33 — chi tiết quản trị viên yêu cầu seller chỉnh sửa */
+  modificationRequestDetails?: string;
+  /** UC33 — quản trị viên đã yêu cầu sửa */
+  modificationRequestedBy?: string;
+  /** UC33 — thời điểm yêu cầu sửa */
+  modificationRequestedAt?: string;
+  /** UC38 */
+  removedAt?: string;
+  removedBy?: string;
+  adminRemovalReason?: string;
 }

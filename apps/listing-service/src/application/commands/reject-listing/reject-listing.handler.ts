@@ -13,16 +13,22 @@ export class RejectListingHandler
     private readonly eventBus: EventBus,
   ) {}
 
-  async execute(command: RejectListingCommand): Promise<void> {
+  async execute(command: RejectListingCommand): Promise<{
+    listingId: string;
+    status: 'rejected';
+    reason: string;
+  }> {
     const existing = await this.writeRepo.findById(command.id);
     if (!existing) {
       throw new BadRequestException('Listing not found');
     }
-    if (existing.status === 'approved' || existing.status === 'sold') {
+
+    if (existing.status !== 'pending') {
       throw new BadRequestException(
-        `Cannot reject a listing with status "${existing.status}"`,
+        `Chi duoc tu choi tin dang dang o trang thai pending (hien tai: ${existing.status})`,
       );
     }
+
     await this.writeRepo.reject(command.id, command.reason);
     this.eventBus.publish(
       new ListingRejectedEvent(
@@ -33,5 +39,11 @@ export class RejectListingHandler
         new Date(),
       ),
     );
+
+    return {
+      listingId: existing.id,
+      status: 'rejected',
+      reason: command.reason,
+    };
   }
 }

@@ -12,4 +12,16 @@ export class ReportWriteRepository {
   async create(record: ReportRecord): Promise<void> {
     this.store.set(record.id, record);
   }
+
+  async update(id: string, patch: Partial<ReportRecord>): Promise<void> {
+    const existing = this.store.get(id);
+    if (!existing) {
+      return;
+    }
+
+    this.store.set(id, {
+      ...existing,
+      ...patch,
+    });
+  }
 }
