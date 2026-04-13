@@ -25,4 +25,11 @@ export interface ListingResponseDto {
   approvedAt?: string;
   /** UC16 A1 — lý do từ chối */
   rejectionReason?: string;
+  shareCount?: number;
+  viewCount?: number;
+  favoriteCount?: number;
+  contactCount?: number;
+  pushedAt?: string;
+  isFeatured?: boolean;
+  featuredUntil?: string;
 }

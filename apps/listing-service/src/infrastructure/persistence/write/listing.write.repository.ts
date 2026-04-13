@@ -100,6 +100,46 @@ export class ListingWriteRepository {
     return true;
   }
 
+  async incrementViewCount(id: string): Promise<boolean> {
+    const existing = this.store.get(id);
+    if (!existing) return false;
+
+    const updated: ListingRecord = {
+      ...existing,
+      viewCount: (existing.viewCount ?? 0) + 1,
+    };
+    this.store.set(id, updated);
+    return true;
+  }
+
+  async updatePushedAt(id: string, date: Date): Promise<boolean> {
+    const existing = this.store.get(id);
+    if (!existing) return false;
+
+    const updated: ListingRecord = {
+      ...existing,
+      pushedAt: date,
+    };
+    this.store.set(id, updated);
+    return true;
+  }
+
+  async featureListing(id: string, days: number): Promise<boolean> {
+    const existing = this.store.get(id);
+    if (!existing) return false;
+
+    const featuredUntil = new Date();
+    featuredUntil.setDate(featuredUntil.getDate() + days);
+
+    const updated: ListingRecord = {
+      ...existing,
+      isFeatured: true,
+      featuredUntil: featuredUntil,
+    };
+    this.store.set(id, updated);
+    return true;
+  }
+
   async delete(id: string): Promise<void> {
     this.store.delete(id);
   }

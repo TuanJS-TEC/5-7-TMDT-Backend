@@ -31,6 +31,13 @@ export class ListingReadRepository {
       updatedAt: r.updatedAt.toISOString(),
       approvedAt: r.approvedAt?.toISOString(),
       rejectionReason: r.rejectionReason,
+      shareCount: r.shareCount,
+      viewCount: r.viewCount,
+      favoriteCount: r.favoriteCount,
+      contactCount: r.contactCount,
+      pushedAt: r.pushedAt?.toISOString(),
+      isFeatured: r.isFeatured,
+      featuredUntil: r.featuredUntil?.toISOString(),
     };
   }
 
