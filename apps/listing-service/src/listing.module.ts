@@ -27,6 +27,9 @@ import { FilterListingsHandler } from './application/queries/filter-listings/fil
 import { GetListingPackagesHandler } from './application/queries/get-listing-packages/get-listing-packages.handler';
 import { ShareListingHandler } from './application/commands/share-listing/share-listing.handler';
 import { ReportListingHandler } from './application/commands/report-listing/report-listing.handler';
+import { GetListingStatisticsHandler } from './application/queries/get-listing-statistics/get-listing-statistics.handler';
+import { PushListingHandler } from './application/commands/push-listing/push-listing.handler';
+import { FeatureListingHandler } from './application/commands/feature-listing/feature-listing.handler';
 import { ReportReadRepository } from './infrastructure/persistence/read/report.read.repository';
 import { ReportWriteRepository } from './infrastructure/persistence/write/report.write.repository';
 import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
@@ -52,8 +55,10 @@ const commandHandlers = [
   DeleteListingHandler,
   ShareListingHandler,
   ReportListingHandler,
-  AddFavoriteHandler,
-  RemoveFavoriteHandler,
+    AddFavoriteHandler,
+    RemoveFavoriteHandler,
+    PushListingHandler,
+    FeatureListingHandler,
 ];
 const queryHandlers = [
   GetListingDetailHandler,
@@ -63,8 +68,9 @@ const queryHandlers = [
   FilterListingsHandler,
   /** UC18 — Lấy danh sách gói đăng tin */
   GetListingPackagesHandler,
-  CompareListingsHandler,
-  GetFavoriteListingsHandler,
+    CompareListingsHandler,
+    GetFavoriteListingsHandler,
+    GetListingStatisticsHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,
