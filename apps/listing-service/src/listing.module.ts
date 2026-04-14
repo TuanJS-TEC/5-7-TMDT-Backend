@@ -72,6 +72,10 @@ const commandHandlers = [
   ReportListingHandler,
   AddFavoriteHandler,
   RemoveFavoriteHandler,
+  /** UC21 — Đẩy tin lên top */
+  PushListingHandler,
+  /** UC22 — Ghim tin nổi bật */
+  FeatureListingHandler,
 ];
 const queryHandlers = [
   GetListingDetailHandler,
@@ -84,6 +88,8 @@ const queryHandlers = [
   CompareListingsHandler,
   GetFavoriteListingsHandler,
   GetListingStatsHandler,
+  /** UC20 — Xem thống kê tin đăng */
+  GetListingStatisticsHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,
