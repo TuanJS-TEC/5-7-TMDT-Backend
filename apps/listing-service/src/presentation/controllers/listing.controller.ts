@@ -741,4 +741,4 @@ export class ListingController {
     return this.commandBus.execute(new DeleteListingCommand(id, dto.sellerId));
   }
 }
->>>>>>> 1d388e6ef4b9d4689193fae47f4e44da0997291a
+

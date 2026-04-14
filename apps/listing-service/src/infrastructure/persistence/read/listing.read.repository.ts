@@ -31,7 +31,6 @@ export class ListingReadRepository {
       updatedAt: r.updatedAt.toISOString(),
       approvedAt: r.approvedAt?.toISOString(),
       rejectionReason: r.rejectionReason,
-<<<<<<< HEAD
       shareCount: r.shareCount,
       viewCount: r.viewCount,
       favoriteCount: r.favoriteCount,
@@ -39,14 +38,12 @@ export class ListingReadRepository {
       pushedAt: r.pushedAt?.toISOString(),
       isFeatured: r.isFeatured,
       featuredUntil: r.featuredUntil?.toISOString(),
-=======
       modificationRequestDetails: r.modificationRequestDetails,
       modificationRequestedBy: r.modificationRequestedBy,
       modificationRequestedAt: r.modificationRequestedAt?.toISOString(),
       removedAt: r.removedAt?.toISOString(),
       removedBy: r.removedBy,
       adminRemovalReason: r.adminRemovalReason,
->>>>>>> 1d388e6ef4b9d4689193fae47f4e44da0997291a
     };
   }
 
