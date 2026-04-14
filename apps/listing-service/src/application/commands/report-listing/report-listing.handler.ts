@@ -39,7 +39,12 @@ export class ReportListingHandler implements ICommandHandler<ReportListingComman
       reporterId: report.reporterId,
       reason: report.reason,
       description: report.description,
+      targetType: 'listing',
+      targetId: report.listingId,
       status: report.status,
+      evidenceImages: [],
+      evidenceMessages: [],
+      evidenceVideos: [],
       createdAt: report.createdAt.toISOString()
     });
 

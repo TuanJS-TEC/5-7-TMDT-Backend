@@ -31,6 +31,7 @@ export class ListingReadRepository {
       updatedAt: r.updatedAt.toISOString(),
       approvedAt: r.approvedAt?.toISOString(),
       rejectionReason: r.rejectionReason,
+<<<<<<< HEAD
       shareCount: r.shareCount,
       viewCount: r.viewCount,
       favoriteCount: r.favoriteCount,
@@ -38,6 +39,14 @@ export class ListingReadRepository {
       pushedAt: r.pushedAt?.toISOString(),
       isFeatured: r.isFeatured,
       featuredUntil: r.featuredUntil?.toISOString(),
+=======
+      modificationRequestDetails: r.modificationRequestDetails,
+      modificationRequestedBy: r.modificationRequestedBy,
+      modificationRequestedAt: r.modificationRequestedAt?.toISOString(),
+      removedAt: r.removedAt?.toISOString(),
+      removedBy: r.removedBy,
+      adminRemovalReason: r.adminRemovalReason,
+>>>>>>> 1d388e6ef4b9d4689193fae47f4e44da0997291a
     };
   }
 
@@ -52,6 +61,29 @@ export class ListingReadRepository {
       .map((id) => this.store.get(id))
       .filter((r): r is ListingRecord => r !== undefined && r.status === 'approved')
       .map((r) => this.toDto(r));
+  }
+
+  // UC20 — Thống kê tổng hợp tin đăng
+  async getStats(): Promise<{
+    total: number;
+    byStatus: Record<string, number>;
+    byPackage: Record<string, number>;
+    byMake: Record<string, number>;
+  }> {
+    const all = [...this.store.values()];
+    const total = all.length;
+
+    const byStatus: Record<string, number> = {};
+    const byPackage: Record<string, number> = {};
+    const byMake: Record<string, number> = {};
+
+    for (const r of all) {
+      byStatus[r.status] = (byStatus[r.status] ?? 0) + 1;
+      byPackage[r.packageType] = (byPackage[r.packageType] ?? 0) + 1;
+      byMake[r.carMake] = (byMake[r.carMake] ?? 0) + 1;
+    }
+
+    return { total, byStatus, byPackage, byMake };
   }
 
   /** UC17 — trả về raw records để listing-image.service lọc manual review */

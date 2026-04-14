@@ -8,7 +8,7 @@ import { LISTING_STORE, FAVORITE_STORE } from '../src/infrastructure/persistence
 import { ListingRecord } from '../src/infrastructure/persistence/listing-record';
 import { ProfileService } from '../src/infrastructure/auth/profile.service';
 import { ListingResponseDto } from '../src/presentation/dto/listing.response.dto';
-import { createMockFavoriteStore } from '../src/infrastructure/persistence/mock-favorite.store';
+import { createMockFavoriteStore } from '../src/infrastructure/persistence/mock-listing.store';
 
 // Dữ liệu mock từ mock-listing.store
 const mockListingsData = createMockListingStore();

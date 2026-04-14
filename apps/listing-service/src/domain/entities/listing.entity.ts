@@ -4,9 +4,12 @@ export type ListingPackageType = 'basic' | 'premium' | 'vip';
 export type ListingStatus =
   | 'draft'
   | 'pending'
+  | 'modification_requested'
   | 'approved'
   | 'rejected'
-  | 'sold';
+  | 'sold'
+  /** UC38 — đã gỡ hiển thị (không còn active công khai) */
+  | 'removed';
 
 export type FuelType = 'petrol' | 'diesel' | 'electric' | 'hybrid';
 export type TransmissionType = 'automatic' | 'manual';

@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
+import { typeOrmModuleOptions } from '@car-marketplace/database';
 import { PaymentModule } from './payment.module';
 
 @Module({
@@ -12,6 +15,12 @@ import { PaymentModule } from './payment.module';
         join(process.cwd(), '..', '.env'),
         join(process.cwd(), '..', '..', '.env'),
       ],
+    }),
+    ScheduleModule.forRoot(),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => typeOrmModuleOptions(config),
     }),
     PaymentModule,
   ],

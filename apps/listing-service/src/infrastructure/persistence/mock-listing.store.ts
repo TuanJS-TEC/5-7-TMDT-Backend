@@ -166,3 +166,8 @@ export function createMockListingStore(): Map<string, ListingRecord> {
   listings.forEach((listing) => store.set(listing.id, listing));
   return store;
 }
+
+/** In-memory favorite index: userId → set of listingIds. */
+export function createMockFavoriteStore(): Map<string, Set<string>> {
+  return new Map<string, Set<string>>();
+}

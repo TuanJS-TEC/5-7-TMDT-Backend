@@ -14,7 +14,9 @@
     "build:gateway": "npm run build -w api-gateway",
     "build:listing": "npm run build:libs && npm run build -w listing-service",
     "start:gateway": "npm run start:dev -w api-gateway",
-    "start:listing": "npm run start:dev -w listing-service"
+    "start:listing": "npm run start:dev -w listing-service",
+    "start:auth": "npm run start:dev -w auth-service",
+    "start:user": "npm run start:dev -w user-service"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
@@ -23,6 +25,7 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/microservices": "^11.0.1",
     "@nestjs/passport": "^11.0.0",
+    "@nestjs/schedule": "^5.0.1",
     "@nestjs/typeorm": "^11.0.0",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.5",

@@ -38,6 +38,12 @@ export interface ListingRecord {
   approvedAt?: Date;
   /** UC16 A1 — lý do từ chối */
   rejectionReason?: string;
+  /** UC33 — chi tiết yêu cầu seller chỉnh sửa */
+  modificationRequestDetails?: string;
+  /** UC33 — quản trị viên yêu cầu sửa */
+  modificationRequestedBy?: string;
+  /** UC33 — thời điểm yêu cầu sửa */
+  modificationRequestedAt?: Date;
   /** UC17 — số lần AI từ chối ảnh */
   imageAiFailureCount?: number;
   /** UC17 — có ảnh đang chờ QTV duyệt thủ công không */
@@ -46,4 +52,10 @@ export interface ListingRecord {
   pendingManualReviewImageUrl?: string;
   /** UC17 — trạng thái kiểm duyệt ảnh: 'none' | 'pending_manual_review' */
   imageModerationState?: string;
+  /** UC38 — thời điểm gỡ tin (admin) */
+  removedAt?: Date;
+  /** UC38 — QTV thực hiện */
+  removedBy?: string;
+  /** UC38 — lý do gỡ hàng loạt */
+  adminRemovalReason?: string;
 }
