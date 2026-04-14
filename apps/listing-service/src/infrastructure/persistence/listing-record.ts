@@ -12,6 +12,12 @@ export interface ListingRecord {
   /** UC16 — gói tin người bán chọn */
   packageType: ListingPackageType;
   shareCount?: number;
+  viewCount?: number;
+  favoriteCount?: number;
+  contactCount?: number;
+  pushedAt?: Date;
+  isFeatured?: boolean;
+  featuredUntil?: Date;
   /** UC16 — mảng URL ảnh xe */
   imageUrls: string[];
   /** Hãng xe */

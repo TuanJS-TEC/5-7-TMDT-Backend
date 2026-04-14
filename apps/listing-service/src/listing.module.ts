@@ -23,11 +23,14 @@ import { ListingReadRepository } from './infrastructure/persistence/read/listing
 import { RabbitMqPublisher } from './infrastructure/messaging/rabbitmq.publisher';
 import { FAVORITE_STORE, LISTING_STORE } from './infrastructure/persistence/listing.store.token';
 import type { ListingRecord } from './infrastructure/persistence/listing-record';
-import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler'; 
+import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler';
 import { FilterListingsHandler } from './application/queries/filter-listings/filter-listings.handler';
 import { GetListingPackagesHandler } from './application/queries/get-listing-packages/get-listing-packages.handler';
 import { ShareListingHandler } from './application/commands/share-listing/share-listing.handler';
 import { ReportListingHandler } from './application/commands/report-listing/report-listing.handler';
+import { GetListingStatisticsHandler } from './application/queries/get-listing-statistics/get-listing-statistics.handler';
+import { PushListingHandler } from './application/commands/push-listing/push-listing.handler';
+import { FeatureListingHandler } from './application/commands/feature-listing/feature-listing.handler';
 import { ReportReadRepository } from './infrastructure/persistence/read/report.read.repository';
 import { ReportWriteRepository } from './infrastructure/persistence/write/report.write.repository';
 import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
@@ -69,18 +72,24 @@ const commandHandlers = [
   ReportListingHandler,
   AddFavoriteHandler,
   RemoveFavoriteHandler,
+  /** UC21 — Đẩy tin lên top */
+  PushListingHandler,
+  /** UC22 — Ghim tin nổi bật */
+  FeatureListingHandler,
 ];
 const queryHandlers = [
   GetListingDetailHandler,
   GetListingListHandler,
   GetSellerListingsHandler,
-  SearchListingsHandler, 
+  SearchListingsHandler,
   FilterListingsHandler,
   /** UC18 — Lấy danh sách gói đăng tin */
   GetListingPackagesHandler,
   CompareListingsHandler,
   GetFavoriteListingsHandler,
   GetListingStatsHandler,
+  /** UC20 — Xem thống kê tin đăng */
+  GetListingStatisticsHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,
@@ -98,14 +107,14 @@ try {
   const mockListing = require('./infrastructure/persistence/mock-listing.store');
   createMockListingStore = mockListing.createMockListingStore || createMockListingStore;
   createMockFavoriteStore = mockListing.createMockFavoriteStore || createMockFavoriteStore;
-} catch (e) {}
+} catch (e) { }
 
 let createMockReportStore: any = () => new Map();
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mockReport = require('./infrastructure/persistence/mock-report.store');
   createMockReportStore = mockReport.createMockReportStore || createMockReportStore;
-} catch (e) {}
+} catch (e) { }
 
 const typeOrmListing =
   process.env.SKIP_DATABASE === 'true'
