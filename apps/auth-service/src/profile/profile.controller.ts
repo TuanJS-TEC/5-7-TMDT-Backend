@@ -13,9 +13,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-import { JwtRequestUser } from '../auth/jwt-payload.types';
+// import { JwtRequestUser } from '../auth/jwt-payload.types';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { SellerGuard } from '../auth/seller.guard';
+// import { SellerGuard } from '../auth/seller.guard';
+import { JwtRequestUser, SellerGuard } from '@car-marketplace/common';
 import { PhoneChangeRequestOtpDto } from './dto/phone-change-request.dto';
 import { PhoneChangeVerifyDto } from './dto/phone-change-verify.dto';
 import { UpdateSellerProfileDto } from './dto/update-seller-profile.dto';

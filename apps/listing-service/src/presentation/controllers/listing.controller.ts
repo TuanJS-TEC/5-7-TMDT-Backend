@@ -17,6 +17,8 @@ import {
   DefaultValuePipe,
   HttpCode,
   HttpStatus,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -58,6 +60,10 @@ import { AccountLockService } from '../../application/services/account-lock.serv
 import { RemoveAllActiveListingsDto } from '../dto/remove-all-active-listings.dto';
 import { SellerListingsRemovalService } from '../../application/services/seller-listings-removal.service';
 import { Uc38RemovalAuditReadRepository } from '../../infrastructure/persistence/read/uc38-removal-audit.read.repository';
+import { MarkListingSoldCommand } from '../../application/commands/mark-listing-sold/mark-listing-sold.command';
+import { JwtAuthGuard, SellerGuard, JwtRequestUser } from '@car-marketplace/common';
+import { RenewListingCommand } from '../../application/commands/renew-listing/renew-listing.command';
+import { RenewListingDto } from '../dto/renew-listing.dto';
 
 @Controller({ path: 'listings', version: '1' })
 export class ListingController {
@@ -735,10 +741,63 @@ export class ListingController {
    * DELETE /api/v1/listings/:id
    * Người bán xoá bài đăng của chính mình
    */
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string, @Body() dto: DeleteListingDto) {
-    return this.commandBus.execute(new DeleteListingCommand(id, dto.sellerId));
+  // @Delete(':id')
+  // @HttpCode(HttpStatus.NO_CONTENT)
+  // remove(@Param('id', ParseUUIDPipe) id: string, @Body() dto: DeleteListingDto) {
+  //   return this.commandBus.execute(new DeleteListingCommand(id, dto.sellerId));
+  // }
+
+  /**
+   * PATCH /api/v1/listings/:id/mark-sold
+   * UC25: Đánh dấu tin đăng đã bán
+   */
+  @Patch(':id/mark-sold')
+  @UseGuards(JwtAuthGuard, SellerGuard) // Chỉ người bán đã đăng nhập mới có quyền
+  @HttpCode(HttpStatus.OK)
+  async markSold(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: JwtRequestUser }, // Lấy thông tin user từ JWT Guard
+  ) {
+    await this.commandBus.execute(
+      new MarkListingSoldCommand(id, req.user.userId),
+    );
+    return { success: true, message: 'Tin đăng đã được đánh dấu là đã bán.' };
   }
+
+  /**
+   * DELETE /api/v1/listings/:id
+   * UC26: Người bán xoá bài đăng của chính mình (soft delete)
+   */
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, SellerGuard) // Chỉ người bán đã đăng nhập mới có quyền
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: JwtRequestUser }, // Lấy thông tin user từ JWT Guard
+  ) {
+    await this.commandBus.execute(new DeleteListingCommand(id, req.user.userId));
+  }
+
+  /**
+   * POST /api/v1/listings/:id/renew
+   * UC24: Gia hạn gói dịch vụ cho tin đăng
+   */
+  @Post(':id/renew')
+  @UseGuards(JwtAuthGuard, SellerGuard) // Chỉ người bán đã đăng nhập mới có quyền
+  @HttpCode(HttpStatus.OK)
+  async renewListing(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: JwtRequestUser },
+    @Body() body: RenewListingDto,
+  ) {
+    if (id !== body.listingId) {
+      throw new BadRequestException('Listing ID trong URL và body không khớp.');
+    }
+    await this.commandBus.execute(
+      new RenewListingCommand(body.listingId, req.user.userId, body.newPackageType, body.paymentOrderId),
+    );
+    return { success: true, message: 'Tin đăng đã được gia hạn thành công.' };
+  }
+
 }
 

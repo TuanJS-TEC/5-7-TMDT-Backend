@@ -33,6 +33,8 @@ export class CreateListingHandler
       status: 'pending',
       createdAt: now,
       updatedAt: now,
+      expiresAt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // Mặc định hết hạn sau 30 ngày
+      isDeleted: false,
     });
     this.eventBus.publish(
       new ListingCreatedEvent(

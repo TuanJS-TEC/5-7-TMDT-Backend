@@ -13,6 +13,8 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ListingPackageType } from '../../domain/entities/listing.entity';
+import type { FuelType, TransmissionType } from '../../domain/entities/listing.entity';
 
 
 export class CreateListingDto {
@@ -32,8 +34,10 @@ export class CreateListingDto {
   sellerId!: string;
 
   /** UC16 bước 3 — gói tin: basic | premium | vip */
-  @IsEnum(['basic', 'premium', 'vip'])
-  packageType!: 'basic' | 'premium' | 'vip';
+  // @IsEnum(['basic', 'premium', 'vip'])
+  // packageType!: 'basic' | 'premium' | 'vip';
+  @IsEnum(ListingPackageType)
+  packageType!: ListingPackageType;
 
   /**
    * UC16 bước 5 — danh sách URL ảnh xe (tối thiểu 1, tối đa 20).
@@ -70,11 +74,11 @@ export class CreateListingDto {
 
   /** Loại nhiên liệu */
   @IsEnum(['petrol', 'diesel', 'electric', 'hybrid', 'other'])
-  fuelType!: string;
+  fuelType!: FuelType;
 
   /** Hộp số */
   @IsEnum(['automatic', 'manual', 'semi-automatic'])
-  transmission!: string;
+  transmission!: TransmissionType;
 
   /**
    * Mã người bán — optional field nếu controller muốn

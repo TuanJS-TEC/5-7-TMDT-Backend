@@ -24,7 +24,8 @@
     "noFallthroughCasesInSwitch": false,
     "types": ["jest", "node"],
     "paths": {
-      "@car-marketplace/*": ["../../libs/*/src"]
+      "@car-marketplace/common": ["../../libs/common/dist"],
+      "@car-marketplace/*": ["../../libs/*/dist"]
     }
   },
   "include": ["src/**/*", "test/**/*"]
