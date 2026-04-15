@@ -1,6 +1,8 @@
 import type {
   ListingStatus,
   ListingPackageType,
+  FuelType,
+  TransmissionType,
 } from '../../domain/entities/listing.entity';
 
 export interface ListingRecord {
@@ -29,9 +31,11 @@ export interface ListingRecord {
   /** Số km đã đi */
   mileageKm: number;
   /** Loại nhiên liệu: petrol | diesel | electric | hybrid */
-  fuelType: string;
-  /** Hộp số: automatic | manual */
-  transmission: string;
+  // fuelType: string;
+  // /** Hộp số: automatic | manual */
+  // transmission: string;
+  fuelType: FuelType;
+  transmission: TransmissionType;
   status: ListingStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -58,4 +62,6 @@ export interface ListingRecord {
   removedBy?: string;
   /** UC38 — lý do gỡ hàng loạt */
   adminRemovalReason?: string;
+  expiresAt: Date; // Ngày hết hạn của gói tin
+  isDeleted: boolean; // Trạng thái xóa mềm
 }

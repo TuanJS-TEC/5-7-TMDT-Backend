@@ -1,4 +1,5 @@
 import type { ListingPackageType } from '../../../domain/entities/listing.entity';
+import type { FuelType, TransmissionType } from '../../../domain/entities/listing.entity';
 
 export class CreateListingCommand {
   constructor(
@@ -19,8 +20,10 @@ export class CreateListingCommand {
     /** Số km đã đi */
     public readonly mileageKm: number,
     /** Loại nhiên liệu */
-    public readonly fuelType: string,
-    /** Hộp số */
-    public readonly transmission: string,
+    // public readonly fuelType: string,
+    // /** Hộp số */
+    // public readonly transmission: string,
+    public readonly fuelType: FuelType,
+    public readonly transmission: TransmissionType,
   ) {}
 }

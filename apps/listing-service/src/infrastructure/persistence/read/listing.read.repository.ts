@@ -44,6 +44,8 @@ export class ListingReadRepository {
       removedAt: r.removedAt?.toISOString(),
       removedBy: r.removedBy,
       adminRemovalReason: r.adminRemovalReason,
+      expiresAt: r.expiresAt.toISOString(),
+      isDeleted: r.isDeleted,
     };
   }
 

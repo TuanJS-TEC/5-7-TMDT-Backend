@@ -1,6 +1,8 @@
 import type {
   ListingStatus,
   ListingPackageType,
+  FuelType,
+  TransmissionType,
 } from '../../domain/entities/listing.entity';
 
 export interface ListingResponseDto {
@@ -17,8 +19,10 @@ export interface ListingResponseDto {
   carModel: string;
   carYear: number;
   mileageKm: number;
-  fuelType: string;
-  transmission: string;
+  // fuelType: string;
+  // transmission: string;
+  fuelType: FuelType;
+  transmission: TransmissionType;
   status: ListingStatus;
   createdAt: string;
   updatedAt: string;
@@ -42,4 +46,6 @@ export interface ListingResponseDto {
   removedAt?: string;
   removedBy?: string;
   adminRemovalReason?: string;
+  expiresAt: string;
+  isDeleted: boolean;
 }

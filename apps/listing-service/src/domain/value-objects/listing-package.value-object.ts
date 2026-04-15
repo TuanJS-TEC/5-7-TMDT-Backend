@@ -1,4 +1,4 @@
-import type { ListingPackageType } from '../entities/listing.entity';
+import { ListingPackageType } from '../entities/listing.entity';
 
 /** Thông tin chi tiết của một gói đăng tin */
 export interface ListingPackageInfo {
@@ -23,7 +23,7 @@ export interface ListingPackageInfo {
 /** Danh sách tất cả các gói đăng tin trong hệ thống (UC18) */
 export const LISTING_PACKAGES: ListingPackageInfo[] = [
   {
-    type: 'basic',
+    type: ListingPackageType.BASIC,
     name: 'Gói Cơ Bản',
     priceVnd: 0,
     durationDays: 7,
@@ -38,7 +38,7 @@ export const LISTING_PACKAGES: ListingPackageInfo[] = [
     ],
   },
   {
-    type: 'premium',
+    type: ListingPackageType.PREMIUM,
     name: 'Gói Nổi Bật',
     priceVnd: 99_000,
     durationDays: 30,
@@ -55,7 +55,7 @@ export const LISTING_PACKAGES: ListingPackageInfo[] = [
     ],
   },
   {
-    type: 'vip',
+    type: ListingPackageType.VIP,
     name: 'Gói VIP',
     priceVnd: 299_000,
     durationDays: 60,

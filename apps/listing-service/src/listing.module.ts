@@ -59,6 +59,16 @@ import { SellerListingsRemovalService } from './application/services/seller-list
 import { UC38_REMOVAL_AUDIT_STORE } from './infrastructure/persistence/uc38-removal-audit.store.token';
 import { Uc38RemovalAuditReadRepository } from './infrastructure/persistence/read/uc38-removal-audit.read.repository';
 import { Uc38RemovalAuditWriteRepository } from './infrastructure/persistence/write/uc38-removal-audit.write.repository';
+import { MarkListingSoldCommand } from './application/commands/mark-listing-sold/mark-listing-sold.command';
+import { MarkListingSoldHandler } from './application/commands/mark-listing-sold/mark-listing-sold.handler';
+import { ListingSoldEvent } from './application/events/listing-sold/listing-sold.event';
+import { ListingDeletedEvent } from './application/events/listing-deleted/listing-deleted.event';
+// import { ListingSoldEventHandler } from './application/events/listing-sold/listing-sold.handler';
+import { RenewListingCommand } from './application/commands/renew-listing/renew-listing.command';
+import { RenewListingHandler } from './application/commands/renew-listing/renew-listing.handler';
+import { RenewListingDto } from './presentation/dto/renew-listing.dto';
+import { ListingRenewedEvent } from './application/events/listing-renewed/listing-renewed.event';
+import { PaymentServiceHttpClient } from './infrastructure/payment/payment-service-http.client';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -76,6 +86,8 @@ const commandHandlers = [
   PushListingHandler,
   /** UC22 — Ghim tin nổi bật */
   FeatureListingHandler,
+  MarkListingSoldHandler,
+  RenewListingHandler,
 ];
 const queryHandlers = [
   GetListingDetailHandler,
@@ -98,6 +110,10 @@ const eventHandlers = [
   ListingRejectedHandler,
   /** UC33 — publish listing.modification_requested event → notification-service */
   ListingModificationRequestedHandler,
+  ListingSoldEvent,
+  ListingDeletedEvent,
+  ListingRenewedEvent,
+  // ListingSoldEventHandler,
 ];
 
 let createMockListingStore: any = () => new Map();
@@ -172,6 +188,7 @@ const typeOrmListing =
     Uc38RemovalAuditWriteRepository,
     SellerListingsRemovalService,
     AccountLockService,
+    PaymentServiceHttpClient,
     ...commandHandlers,
     ...queryHandlers,
     ...eventHandlers,

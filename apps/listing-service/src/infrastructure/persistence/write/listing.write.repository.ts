@@ -50,6 +50,8 @@ export class ListingWriteRepository {
         | 'removedAt'
         | 'removedBy'
         | 'adminRemovalReason'
+        | 'expiresAt'
+        | 'isDeleted'
       >
     >,
   ): Promise<void> {
