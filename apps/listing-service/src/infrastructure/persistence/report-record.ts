@@ -1,7 +1,8 @@
 export interface ReportRecord {
   id: string;
-  /** Backward-compatible field for UC10 listing report */
-  listingId?: string;
+  listingId?: string; // Có thể optional nếu dùng targetId
+  targetType: 'listing' | 'account';
+  targetId: string;
   reporterId: string;
   reason: string;
   description: string;
@@ -13,11 +14,11 @@ export interface ReportRecord {
   evidenceVideos?: string[];
   processedBy?: string;
   processedAt?: string;
-  processedAction?: 'warn_account' | 'lock_account' | 'remove_all_listings' | 'ignore';
+  processedAction?: string;
   processedNote?: string;
-  actionExecutionStatus?: 'deferred_to_uc36_uc37_uc38' | 'ignored' | 'completed';
-  notificationPrimaryChannel?: 'email' | 'in_app';
-  notificationFinalChannel?: 'email' | 'in_app';
+  actionExecutionStatus?: string;
+  notificationPrimaryChannel?: string;
+  notificationFinalChannel?: string;
   notificationFallbackUsed?: boolean;
   createdAt: string; // ISO string
 }

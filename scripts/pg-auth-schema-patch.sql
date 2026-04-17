@@ -11,6 +11,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS "role" varchar(32);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "phoneVerified" boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "adminLocked" boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "adminLockReason" varchar(500);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS "adminLockUntil" timestamptz;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "failedLoginAttempts" int NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "loginLockedUntil" timestamptz;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "lastLoginAt" timestamptz;

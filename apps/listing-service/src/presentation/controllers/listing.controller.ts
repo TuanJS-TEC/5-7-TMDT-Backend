@@ -1,3 +1,6 @@
+import { FeatureListingCommand } from '../../application/commands/feature-listing/feature-listing.command';
+import { FeatureListingDto } from '../dto/feature-listing.dto';
+import { PushListingCommand } from '../../application/commands/push-listing/push-listing.command';
 import {
   Body,
   Controller,
@@ -14,6 +17,8 @@ import {
   DefaultValuePipe,
   HttpCode,
   HttpStatus,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -40,13 +45,25 @@ import { GetListingPackagesQuery } from '../../application/queries/get-listing-p
 import { ShareListingCommand } from '../../application/commands/share-listing/share-listing.command';
 import { ReportListingCommand } from '../../application/commands/report-listing/report-listing.command';
 import { CompareListingsQuery } from '../../application/queries/compare-listings/compare-listings.query';
+import { GetListingStatsQuery } from '../../application/queries/get-listing-stats/get-listing-stats.query';
 import { AddFavoriteCommand } from '../../application/commands/add-favorite/add-favorite.command';
 import { RemoveFavoriteCommand } from '../../application/commands/remove-favorite/remove-favorite.command';
 import { GetFavoriteListingsQuery } from '../../application/queries/get-favorite-listings/get-favorite-listings.query';
+import { GetListingStatisticsQuery } from '../../application/queries/get-listing-statistics/get-listing-statistics.query';
 import { ConfigService } from '@nestjs/config'; // Thêm ConfigService để lấy URL của Auth Service
 import { ProfileService } from '../../infrastructure/auth/profile.service';
 import { ProcessReportDto } from '../dto/process-report.dto';
 import { ReportModerationService } from '../../application/services/report-moderation.service';
+import { SellerWarningReadRepository } from '../../infrastructure/persistence/read/seller-warning.read.repository';
+import { LockUserAccountDto } from '../dto/lock-user-account.dto';
+import { AccountLockService } from '../../application/services/account-lock.service';
+import { RemoveAllActiveListingsDto } from '../dto/remove-all-active-listings.dto';
+import { SellerListingsRemovalService } from '../../application/services/seller-listings-removal.service';
+import { Uc38RemovalAuditReadRepository } from '../../infrastructure/persistence/read/uc38-removal-audit.read.repository';
+import { MarkListingSoldCommand } from '../../application/commands/mark-listing-sold/mark-listing-sold.command';
+import { JwtAuthGuard, SellerGuard, JwtRequestUser } from '@car-marketplace/common';
+import { RenewListingCommand } from '../../application/commands/renew-listing/renew-listing.command';
+import { RenewListingDto } from '../dto/renew-listing.dto';
 
 @Controller({ path: 'listings', version: '1' })
 export class ListingController {
@@ -56,6 +73,10 @@ export class ListingController {
     private readonly listingReadRepository: ListingReadRepository, // Để truy cập trực tiếp cho UC4
     private readonly profileService: ProfileService, // Inject ProfileService để lấy thông tin người bán
     private readonly reportModerationService: ReportModerationService,
+    private readonly sellerWarningReadRepository: SellerWarningReadRepository,
+    private readonly accountLockService: AccountLockService,
+    private readonly sellerListingsRemovalService: SellerListingsRemovalService,
+    private readonly uc38RemovalAuditReadRepository: Uc38RemovalAuditReadRepository,
   ) {}
 
   /**
@@ -260,6 +281,8 @@ export class ListingController {
   /**
    * PATCH /api/v1/listings/admin/reports/:reportId/process
    * UC35 bước 3-4-5 — QTV ra quyết định xử lý và hệ thống thông báo kết quả
+   * UC36 — khi action = warn_account: gửi cảnh báo qua notification-service (UC60) và ghi lịch sử.
+   * UC38 — khi action = remove_all_listings: gỡ (soft) toàn bộ tin approved của seller + audit.
    */
   @Patch('admin/reports/:reportId/process')
   @HttpCode(HttpStatus.OK)
@@ -272,6 +295,97 @@ export class ListingController {
       success: true,
       message: 'Da xu ly bao cao vi pham',
       data,
+    };
+  }
+
+  /**
+   * POST /api/v1/listings/admin/users/:userId/lock
+   * UC37 — khóa tài khoản từ quản lý người dùng (không gắn báo cáo UC35).
+   */
+  @Post('admin/users/:userId/lock')
+  @HttpCode(HttpStatus.OK)
+  async lockUserAccount(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() body: LockUserAccountDto,
+  ) {
+    const data = await this.accountLockService.lockAccountByUserId(userId, {
+      moderatorId: body.moderatorId,
+      reason: body.reason.trim(),
+      lockUntil: body.lockUntil,
+    });
+    return {
+      success: true,
+      message: 'Da khoa tai khoan',
+      data,
+    };
+  }
+
+  /**
+   * GET /api/v1/listings/admin/sellers/:sellerId/warnings
+   * UC36 — lịch sử cảnh báo chính thức của tài khoản người bán.
+   */
+  @Get('admin/sellers/:sellerId/warnings')
+  async listSellerWarnings(@Param('sellerId', ParseUUIDPipe) sellerId: string) {
+    const items = await this.sellerWarningReadRepository.findBySellerId(sellerId);
+    return {
+      total: items.length,
+      items,
+    };
+  }
+
+  /**
+   * POST /api/v1/listings/admin/sellers/:sellerId/listings/remove-all-active
+   * UC38 — gỡ hiển thị toàn bộ tin đang active (`approved`) của seller (lệnh hàng loạt).
+   */
+  @Post('admin/sellers/:sellerId/listings/remove-all-active')
+  @HttpCode(HttpStatus.OK)
+  async removeAllActiveListingsForSeller(
+    @Param('sellerId', ParseUUIDPipe) sellerId: string,
+    @Body() body: RemoveAllActiveListingsDto,
+  ) {
+    const data = await this.sellerListingsRemovalService.removeAllActiveListings(
+      sellerId,
+      {
+        moderatorId: body.moderatorId,
+        note: body.note,
+        source: 'uc38_admin_api',
+      },
+    );
+    return {
+      success: true,
+      message: data.empty
+        ? data.message
+        : `Da go ${data.count} tin dang active`,
+      data,
+    };
+  }
+
+  /**
+   * GET /api/v1/listings/admin/sellers/:sellerId/bulk-listing-removals
+   * UC38 bước 4 — lịch sử thao tác gỡ tin hàng loạt theo seller.
+   */
+  @Get('admin/sellers/:sellerId/bulk-listing-removals')
+  async listBulkListingRemovalsBySeller(
+    @Param('sellerId', ParseUUIDPipe) sellerId: string,
+  ) {
+    const items =
+      await this.uc38RemovalAuditReadRepository.findBySellerId(sellerId);
+    return {
+      total: items.length,
+      items,
+    };
+  }
+
+  /**
+   * GET /api/v1/listings/admin/bulk-listing-removals
+   * UC38 — toàn bộ lịch sử gỡ tin hàng loạt (dashboard QTV).
+   */
+  @Get('admin/bulk-listing-removals')
+  async listAllBulkListingRemovals() {
+    const items = await this.uc38RemovalAuditReadRepository.findAll();
+    return {
+      total: items.length,
+      items,
     };
   }
 
@@ -396,6 +510,16 @@ export class ListingController {
 
     const listings = await this.queryBus.execute(new CompareListingsQuery(ids));
     return listings;
+  }
+
+  /**
+   * GET /api/v1/listings/stats
+   * UC20: Xem thống kê tin đăng
+   */
+  @Get('stats')
+  async getStats() {
+    console.log('Mock: Tracking - Admin đang xem thống kê tin đăng');
+    return this.queryBus.execute(new GetListingStatsQuery());
   }
 
   /**
@@ -617,9 +741,63 @@ export class ListingController {
    * DELETE /api/v1/listings/:id
    * Người bán xoá bài đăng của chính mình
    */
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string, @Body() dto: DeleteListingDto) {
-    return this.commandBus.execute(new DeleteListingCommand(id, dto.sellerId));
+  // @Delete(':id')
+  // @HttpCode(HttpStatus.NO_CONTENT)
+  // remove(@Param('id', ParseUUIDPipe) id: string, @Body() dto: DeleteListingDto) {
+  //   return this.commandBus.execute(new DeleteListingCommand(id, dto.sellerId));
+  // }
+
+  /**
+   * PATCH /api/v1/listings/:id/mark-sold
+   * UC25: Đánh dấu tin đăng đã bán
+   */
+  @Patch(':id/mark-sold')
+  @UseGuards(JwtAuthGuard, SellerGuard) // Chỉ người bán đã đăng nhập mới có quyền
+  @HttpCode(HttpStatus.OK)
+  async markSold(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: JwtRequestUser }, // Lấy thông tin user từ JWT Guard
+  ) {
+    await this.commandBus.execute(
+      new MarkListingSoldCommand(id, req.user.userId),
+    );
+    return { success: true, message: 'Tin đăng đã được đánh dấu là đã bán.' };
   }
+
+  /**
+   * DELETE /api/v1/listings/:id
+   * UC26: Người bán xoá bài đăng của chính mình (soft delete)
+   */
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, SellerGuard) // Chỉ người bán đã đăng nhập mới có quyền
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: JwtRequestUser }, // Lấy thông tin user từ JWT Guard
+  ) {
+    await this.commandBus.execute(new DeleteListingCommand(id, req.user.userId));
+  }
+
+  /**
+   * POST /api/v1/listings/:id/renew
+   * UC24: Gia hạn gói dịch vụ cho tin đăng
+   */
+  @Post(':id/renew')
+  @UseGuards(JwtAuthGuard, SellerGuard) // Chỉ người bán đã đăng nhập mới có quyền
+  @HttpCode(HttpStatus.OK)
+  async renewListing(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: JwtRequestUser },
+    @Body() body: RenewListingDto,
+  ) {
+    if (id !== body.listingId) {
+      throw new BadRequestException('Listing ID trong URL và body không khớp.');
+    }
+    await this.commandBus.execute(
+      new RenewListingCommand(body.listingId, req.user.userId, body.newPackageType, body.paymentOrderId),
+    );
+    return { success: true, message: 'Tin đăng đã được gia hạn thành công.' };
+  }
+
 }
+

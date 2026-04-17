@@ -23,22 +23,21 @@ import { ListingReadRepository } from './infrastructure/persistence/read/listing
 import { RabbitMqPublisher } from './infrastructure/messaging/rabbitmq.publisher';
 import { FAVORITE_STORE, LISTING_STORE } from './infrastructure/persistence/listing.store.token';
 import type { ListingRecord } from './infrastructure/persistence/listing-record';
-import {
-  createMockFavoriteStore,
-  createMockListingStore,
-} from './infrastructure/persistence/mock-listing.store';
-import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler'; 
+import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler';
 import { FilterListingsHandler } from './application/queries/filter-listings/filter-listings.handler';
 import { GetListingPackagesHandler } from './application/queries/get-listing-packages/get-listing-packages.handler';
 import { ShareListingHandler } from './application/commands/share-listing/share-listing.handler';
 import { ReportListingHandler } from './application/commands/report-listing/report-listing.handler';
+import { GetListingStatisticsHandler } from './application/queries/get-listing-statistics/get-listing-statistics.handler';
+import { PushListingHandler } from './application/commands/push-listing/push-listing.handler';
+import { FeatureListingHandler } from './application/commands/feature-listing/feature-listing.handler';
 import { ReportReadRepository } from './infrastructure/persistence/read/report.read.repository';
 import { ReportWriteRepository } from './infrastructure/persistence/write/report.write.repository';
 import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
 import { ReportRecord } from './infrastructure/persistence/report-record';
-import { createMockReportStore } from './infrastructure/persistence/mock-report.store';
 import { ProfileService } from './infrastructure/auth/profile.service';
 import { CompareListingsHandler } from './application/queries/compare-listings/compare-listings.handler';
+import { GetListingStatsHandler } from './application/queries/get-listing-stats/get-listing-stats.handler';
 import { FavoriteReadRepository } from './infrastructure/persistence/read/favorite.read.repository';
 import { FavoriteWriteRepository } from './infrastructure/persistence/write/favorite.write.repository';
 import { AddFavoriteHandler } from './application/commands/add-favorite/add-favorite.handler';
@@ -49,6 +48,27 @@ import { PaymentPackagePaidConsumer } from './infrastructure/messaging/payment-p
 import { PaymentRefundCompletedConsumer } from './infrastructure/messaging/payment-refund-completed.consumer';
 import { ReportModerationService } from './application/services/report-moderation.service';
 import { ReportNotificationService } from './application/services/report-notification.service';
+import { SellerWarningService } from './application/services/seller-warning.service';
+import { SELLER_WARNING_STORE } from './infrastructure/persistence/seller-warning.store.token';
+import { SellerWarningReadRepository } from './infrastructure/persistence/read/seller-warning.read.repository';
+import { SellerWarningWriteRepository } from './infrastructure/persistence/write/seller-warning.write.repository';
+import { NotificationHttpClient } from './infrastructure/notifications/notification-http.client';
+import { AuthAccountHttpClient } from './infrastructure/auth/auth-account-http.client';
+import { AccountLockService } from './application/services/account-lock.service';
+import { SellerListingsRemovalService } from './application/services/seller-listings-removal.service';
+import { UC38_REMOVAL_AUDIT_STORE } from './infrastructure/persistence/uc38-removal-audit.store.token';
+import { Uc38RemovalAuditReadRepository } from './infrastructure/persistence/read/uc38-removal-audit.read.repository';
+import { Uc38RemovalAuditWriteRepository } from './infrastructure/persistence/write/uc38-removal-audit.write.repository';
+import { MarkListingSoldCommand } from './application/commands/mark-listing-sold/mark-listing-sold.command';
+import { MarkListingSoldHandler } from './application/commands/mark-listing-sold/mark-listing-sold.handler';
+import { ListingSoldEvent } from './application/events/listing-sold/listing-sold.event';
+import { ListingDeletedEvent } from './application/events/listing-deleted/listing-deleted.event';
+// import { ListingSoldEventHandler } from './application/events/listing-sold/listing-sold.handler';
+import { RenewListingCommand } from './application/commands/renew-listing/renew-listing.command';
+import { RenewListingHandler } from './application/commands/renew-listing/renew-listing.handler';
+import { RenewListingDto } from './presentation/dto/renew-listing.dto';
+import { ListingRenewedEvent } from './application/events/listing-renewed/listing-renewed.event';
+import { PaymentServiceHttpClient } from './infrastructure/payment/payment-service-http.client';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -62,17 +82,26 @@ const commandHandlers = [
   ReportListingHandler,
   AddFavoriteHandler,
   RemoveFavoriteHandler,
+  /** UC21 — Đẩy tin lên top */
+  PushListingHandler,
+  /** UC22 — Ghim tin nổi bật */
+  FeatureListingHandler,
+  MarkListingSoldHandler,
+  RenewListingHandler,
 ];
 const queryHandlers = [
   GetListingDetailHandler,
   GetListingListHandler,
   GetSellerListingsHandler,
-  SearchListingsHandler, 
+  SearchListingsHandler,
   FilterListingsHandler,
   /** UC18 — Lấy danh sách gói đăng tin */
   GetListingPackagesHandler,
   CompareListingsHandler,
   GetFavoriteListingsHandler,
+  GetListingStatsHandler,
+  /** UC20 — Xem thống kê tin đăng */
+  GetListingStatisticsHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,
@@ -81,7 +110,27 @@ const eventHandlers = [
   ListingRejectedHandler,
   /** UC33 — publish listing.modification_requested event → notification-service */
   ListingModificationRequestedHandler,
+  ListingSoldEvent,
+  ListingDeletedEvent,
+  ListingRenewedEvent,
+  // ListingSoldEventHandler,
 ];
+
+let createMockListingStore: any = () => new Map();
+let createMockFavoriteStore: any = () => new Map();
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mockListing = require('./infrastructure/persistence/mock-listing.store');
+  createMockListingStore = mockListing.createMockListingStore || createMockListingStore;
+  createMockFavoriteStore = mockListing.createMockFavoriteStore || createMockFavoriteStore;
+} catch (e) { }
+
+let createMockReportStore: any = () => new Map();
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mockReport = require('./infrastructure/persistence/mock-report.store');
+  createMockReportStore = mockReport.createMockReportStore || createMockReportStore;
+} catch (e) { }
 
 const typeOrmListing =
   process.env.SKIP_DATABASE === 'true'
@@ -106,6 +155,14 @@ const typeOrmListing =
       provide: REPORT_STORE,
       useFactory: createMockReportStore,
     },
+    {
+      provide: SELLER_WARNING_STORE,
+      useFactory: () => new Map(),
+    },
+    {
+      provide: UC38_REMOVAL_AUDIT_STORE,
+      useFactory: () => new Map(),
+    },
     ListingWriteRepository,
     ListingReadRepository,
     ReportReadRepository,
@@ -122,6 +179,16 @@ const typeOrmListing =
     ProfileService,
     ReportModerationService,
     ReportNotificationService,
+    SellerWarningReadRepository,
+    SellerWarningWriteRepository,
+    NotificationHttpClient,
+    AuthAccountHttpClient,
+    SellerWarningService,
+    Uc38RemovalAuditReadRepository,
+    Uc38RemovalAuditWriteRepository,
+    SellerListingsRemovalService,
+    AccountLockService,
+    PaymentServiceHttpClient,
     ...commandHandlers,
     ...queryHandlers,
     ...eventHandlers,

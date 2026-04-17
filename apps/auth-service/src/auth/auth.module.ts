@@ -17,8 +17,12 @@ import { AuthSessionService } from './auth-session.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy } from './jwt.strategy';
 import { LoginService } from './login.service';
-import { SellerGuard } from './seller.guard';
+// import { SellerGuard } from './seller.guard';
+import { SellerGuard } from '@car-marketplace/common';
 import { SmsNotificationService } from './sms-notification.service';
+import { AdminAccountService } from '../internal/admin-account.service';
+import { InternalApiKeyGuard } from '../internal/internal-api-key.guard';
+import { InternalUsersController } from '../internal/internal-users.controller';
 
 const typeOrmAuth =
   process.env.SKIP_DATABASE === 'true'
@@ -30,6 +34,14 @@ const typeOrmAuth =
           OtpChallengeOrmEntity,
         ]),
       ];
+
+const internalUc37 =
+  process.env.SKIP_DATABASE === 'true'
+    ? { controllers: [] as const, providers: [] as const }
+    : {
+        controllers: [InternalUsersController],
+        providers: [AdminAccountService, InternalApiKeyGuard],
+      };
 
 @Module({
   imports: [
@@ -46,7 +58,7 @@ const typeOrmAuth =
       }),
     }),
   ],
-  controllers: [AuthController, ProfileController],
+  controllers: [AuthController, ProfileController, ...internalUc37.controllers],
   providers: [
     AuthSessionService,
     LoginService,
@@ -59,6 +71,7 @@ const typeOrmAuth =
     JwtAuthGuard,
     SellerGuard,
     ProfileService,
+    ...internalUc37.providers,
   ],
 })
 export class AuthModule {}

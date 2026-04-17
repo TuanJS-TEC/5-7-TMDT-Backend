@@ -1,6 +1,8 @@
 import type {
   ListingStatus,
   ListingPackageType,
+  FuelType,
+  TransmissionType,
 } from '../../domain/entities/listing.entity';
 
 export interface ListingRecord {
@@ -12,6 +14,12 @@ export interface ListingRecord {
   /** UC16 — gói tin người bán chọn */
   packageType: ListingPackageType;
   shareCount?: number;
+  viewCount?: number;
+  favoriteCount?: number;
+  contactCount?: number;
+  pushedAt?: Date;
+  isFeatured?: boolean;
+  featuredUntil?: Date;
   /** UC16 — mảng URL ảnh xe */
   imageUrls: string[];
   /** Hãng xe */
@@ -23,9 +31,11 @@ export interface ListingRecord {
   /** Số km đã đi */
   mileageKm: number;
   /** Loại nhiên liệu: petrol | diesel | electric | hybrid */
-  fuelType: string;
-  /** Hộp số: automatic | manual */
-  transmission: string;
+  // fuelType: string;
+  // /** Hộp số: automatic | manual */
+  // transmission: string;
+  fuelType: FuelType;
+  transmission: TransmissionType;
   status: ListingStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -46,4 +56,12 @@ export interface ListingRecord {
   pendingManualReviewImageUrl?: string;
   /** UC17 — trạng thái kiểm duyệt ảnh: 'none' | 'pending_manual_review' */
   imageModerationState?: string;
+  /** UC38 — thời điểm gỡ tin (admin) */
+  removedAt?: Date;
+  /** UC38 — QTV thực hiện */
+  removedBy?: string;
+  /** UC38 — lý do gỡ hàng loạt */
+  adminRemovalReason?: string;
+  expiresAt: Date; // Ngày hết hạn của gói tin
+  isDeleted: boolean; // Trạng thái xóa mềm
 }
