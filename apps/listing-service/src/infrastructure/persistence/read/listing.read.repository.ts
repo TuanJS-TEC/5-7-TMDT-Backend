@@ -54,6 +54,16 @@ export class ListingReadRepository {
     return r ? this.toDto(r) : null;
   }
 
+  /** UC56 — tìm tin đang active (approved) nhưng đã quá hạn hiển thị */
+  async findApprovedExpired(before: Date): Promise<ListingRecord[]> {
+    return [...this.store.values()].filter((row) => {
+      if (row.isDeleted) {
+        return false;
+      }
+      return row.status === 'approved' && row.expiresAt.getTime() < before.getTime();
+    });
+  }
+
   // UC7 — Lấy nhiều xe theo mảng ID
   async findByIds(ids: string[]): Promise<ListingResponseDto[]> {
     return ids

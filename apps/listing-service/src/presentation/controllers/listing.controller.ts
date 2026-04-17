@@ -64,6 +64,7 @@ import { MarkListingSoldCommand } from '../../application/commands/mark-listing-
 import { JwtAuthGuard, SellerGuard, JwtRequestUser } from '@car-marketplace/common';
 import { RenewListingCommand } from '../../application/commands/renew-listing/renew-listing.command';
 import { RenewListingDto } from '../dto/renew-listing.dto';
+import { ListingExpirationService } from '../../application/services/listing-expiration.service';
 
 @Controller({ path: 'listings', version: '1' })
 export class ListingController {
@@ -77,6 +78,7 @@ export class ListingController {
     private readonly accountLockService: AccountLockService,
     private readonly sellerListingsRemovalService: SellerListingsRemovalService,
     private readonly uc38RemovalAuditReadRepository: Uc38RemovalAuditReadRepository,
+    private readonly listingExpirationService: ListingExpirationService,
   ) {}
 
   /**
@@ -386,6 +388,21 @@ export class ListingController {
     return {
       total: items.length,
       items,
+    };
+  }
+
+  /**
+   * POST /api/v1/listings/admin/jobs/expire-listings/run
+   * UC56 — trigger thu cong de test/chay ngay luong auto an tin het han.
+   */
+  @Post('admin/jobs/expire-listings/run')
+  @HttpCode(HttpStatus.OK)
+  async runExpireListingsJob() {
+    const data = await this.listingExpirationService.runAutoExpire('manual');
+    return {
+      success: true,
+      message: data.message,
+      data,
     };
   }
 

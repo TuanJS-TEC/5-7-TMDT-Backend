@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { join } from 'path';
 import { DatabaseModule } from '@car-marketplace/database';
 import { ListingModule } from './listing.module';
@@ -14,6 +15,7 @@ import { ListingModule } from './listing.module';
         join(process.cwd(), '..', '..', '.env'),
       ],
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     ListingModule,
   ],

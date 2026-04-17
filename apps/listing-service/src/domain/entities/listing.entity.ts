@@ -11,6 +11,8 @@ export type ListingStatus =
   | 'pending'
   | 'modification_requested'
   | 'approved'
+  /** UC56 — tự động ẩn tin khi gói hết hạn hiển thị */
+  | 'expired'
   | 'rejected'
   | 'sold'
   /** UC38 — đã gỡ hiển thị (không còn active công khai) */
