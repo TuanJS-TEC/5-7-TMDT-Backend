@@ -69,6 +69,9 @@ import { RenewListingHandler } from './application/commands/renew-listing/renew-
 import { RenewListingDto } from './presentation/dto/renew-listing.dto';
 import { ListingRenewedEvent } from './application/events/listing-renewed/listing-renewed.event';
 import { PaymentServiceHttpClient } from './infrastructure/payment/payment-service-http.client';
+import { ListingExpirationService } from './application/services/listing-expiration.service';
+import { ListingExpirationNotificationService } from './application/services/listing-expiration-notification.service';
+import { ListingExpirationCron } from './infrastructure/scheduling/listing-expiration.cron';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -189,6 +192,9 @@ const typeOrmListing =
     SellerListingsRemovalService,
     AccountLockService,
     PaymentServiceHttpClient,
+    ListingExpirationService,
+    ListingExpirationNotificationService,
+    ListingExpirationCron,
     ...commandHandlers,
     ...queryHandlers,
     ...eventHandlers,

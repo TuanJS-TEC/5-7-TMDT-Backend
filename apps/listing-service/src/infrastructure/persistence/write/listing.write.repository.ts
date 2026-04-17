@@ -82,6 +82,21 @@ export class ListingWriteRepository {
     this.store.set(id, updated);
   }
 
+  /** UC56 — tự động chuyển tin active sang expired khi hết hạn gói hiển thị */
+  async expire(id: string): Promise<void> {
+    const existing = this.store.get(id);
+    if (!existing) {
+      return;
+    }
+    const now = new Date();
+    const updated: ListingRecord = {
+      ...existing,
+      status: 'expired',
+      updatedAt: now,
+    };
+    this.store.set(id, updated);
+  }
+
   /** UC16 A1 — Admin từ chối / huỷ bài đăng */
   async reject(id: string, reason: string): Promise<void> {
     const existing = this.store.get(id);

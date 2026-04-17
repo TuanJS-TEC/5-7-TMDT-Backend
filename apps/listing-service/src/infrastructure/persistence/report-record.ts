@@ -6,8 +6,6 @@ export interface ReportRecord {
   reporterId: string;
   reason: string;
   description: string;
-  targetType: 'listing' | 'account';
-  targetId: string;
   status: string;
   evidenceImages?: string[];
   evidenceMessages?: string[];
