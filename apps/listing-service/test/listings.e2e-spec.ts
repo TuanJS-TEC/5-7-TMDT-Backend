@@ -13,7 +13,7 @@ import { createMockFavoriteStore } from '../src/infrastructure/persistence/mock-
 // Dữ liệu mock từ mock-listing.store
 const mockListingsData = createMockListingStore();
 const mockFavoriteData = createMockFavoriteStore();
-const sellerIdForUC4 = 'a1b2c3d4-e5f6-7890-1234-567890abcdef'; // ID của Seller 1 từ mock-listing.store
+const sellerIdForUC4 = 'a1b2c3d4-e5f6-4a90-9234-567890abcdef'; // ID của Seller 1 từ mock-listing.store
 const listingIdForUC4 = [...mockListingsData.values()].find(
   (l) => l.sellerId === sellerIdForUC4 && l.status === 'approved'
 )?.id; // Một ID tin đăng approved
