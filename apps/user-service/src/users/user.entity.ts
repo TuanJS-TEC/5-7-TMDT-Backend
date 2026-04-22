@@ -4,16 +4,16 @@ import { AccountType } from './account-type.enum';
 
 @Entity({ name: 'users' })
 export class UserEntity extends BaseEntity {
-  @Column({ length: 120 })
+  @Column({ length: 120, default: '' })
   fullName!: string;
 
-  @Column({ unique: true, length: 20 })
+  @Column({ unique: true, length: 20, nullable: true })
   phone!: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, default: '' })
   passwordHash!: string;
 
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: 'varchar', length: 20, default: 'BUYER' })
   accountType!: AccountType;
 
   @Column({ type: 'timestamptz', nullable: true })

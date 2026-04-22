@@ -12,6 +12,7 @@ import { NotificationsController } from './presentation/notifications.controller
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      ignoreEnvFile: process.env.NODE_ENV === 'production',
     }),
   ],
   controllers: [AppController, NotificationsController],

@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      ignoreEnvFile: process.env.NODE_ENV === 'production',
       envFilePath: [
         join(process.cwd(), '.env'),
         join(process.cwd(), '..', '.env'),

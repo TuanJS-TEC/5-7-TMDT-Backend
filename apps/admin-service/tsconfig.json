@@ -19,10 +19,7 @@
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false,
-    "types": ["jest", "node"],
-    "paths": {
-      "@car-marketplace/*": ["../../libs/*/src"]
-    }
+    "types": ["jest", "node"]
   },
   "include": ["src/**/*", "test/**/*"]
 }

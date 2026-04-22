@@ -10,6 +10,7 @@ import { PaymentModule } from './payment.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      ignoreEnvFile: process.env.NODE_ENV === 'production',
       envFilePath: [
         join(process.cwd(), '.env'),
         join(process.cwd(), '..', '.env'),

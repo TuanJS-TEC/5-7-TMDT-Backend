@@ -10,7 +10,7 @@ export type UserAccountType = 'personal' | 'showroom';
 @Entity({ name: 'users' })
 export class UserOrmEntity extends BaseEntity {
   @Index({ unique: true })
-  @Column({ type: 'varchar', length: 16 })
+  @Column({ type: 'varchar', length: 16, nullable: true })
   phone!: string;
 
   @Column({ type: 'varchar', length: 200, default: '' })
@@ -23,10 +23,10 @@ export class UserOrmEntity extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   freeListingCredits!: number;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, default: '' })
   passwordHash!: string;
 
-  @Column({ type: 'varchar', length: 32 })
+  @Column({ type: 'varchar', length: 32, default: 'buyer' })
   role!: UserRole;
 
   @Column({ type: 'boolean', default: false })

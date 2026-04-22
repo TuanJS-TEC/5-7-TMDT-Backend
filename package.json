@@ -16,7 +16,11 @@
     "start:gateway": "npm run start:dev -w api-gateway",
     "start:listing": "npm run start:dev -w listing-service",
     "start:auth": "npm run start:dev -w auth-service",
-    "start:user": "npm run start:dev -w user-service"
+    "start:user": "npm run start:dev -w user-service",
+    "start:web": "npm run dev -w web",
+    "docker:stack:up": "docker compose -f docker-compose.stack.yml up --build",
+    "docker:stack:down": "docker compose -f docker-compose.stack.yml down",
+    "docker:stack:build": "docker compose -f docker-compose.stack.yml build"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",

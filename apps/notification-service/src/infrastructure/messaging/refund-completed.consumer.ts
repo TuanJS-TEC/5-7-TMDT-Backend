@@ -13,6 +13,30 @@ import {
 } from '@car-marketplace/messaging';
 import { RefundNotificationDispatcher } from '../../application/refund-notification.dispatcher';
 
+async function connectAmqpWithRetry(
+  url: string,
+  logger: Logger,
+  maxAttempts = 15,
+  delayMs = 2000,
+): Promise<ChannelModel> {
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await connect(url);
+    } catch (e) {
+      lastErr = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      logger.warn(
+        `AMQP connect attempt ${attempt}/${maxAttempts} failed: ${msg}`,
+      );
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 /**
  * UC60 — subscribe `payment.refund.completed` (UC34 hoàn tiền → thông báo người dùng).
  */
@@ -38,7 +62,7 @@ export class RefundCompletedConsumer
       return;
     }
 
-    this.broker = await connect(url);
+    this.broker = await connectAmqpWithRetry(url, this.logger);
     this.channel = await this.broker.createChannel();
     await this.channel.assertQueue(PAYMENT_EVENTS.REFUND_COMPLETED, {
       durable: true,

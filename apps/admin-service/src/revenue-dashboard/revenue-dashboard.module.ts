@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PaymentOrderOrmEntity } from '../../../../libs/database/src/entities/payment-order.orm.entity';
+import { PaymentOrderOrmEntity } from '@car-marketplace/database';
 import { RevenueDashboardController } from './revenue-dashboard.controller';
 import { RevenueDashboardService } from './revenue-dashboard.service';
 

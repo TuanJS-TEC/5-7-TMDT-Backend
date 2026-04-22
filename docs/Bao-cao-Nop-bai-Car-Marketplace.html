@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="Generator" content="Car Marketplace documentation" />
+  <title>Báo cáo — Backend &amp; Cơ sở dữ liệu — Car Marketplace</title>
+  <style>
+    body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.45; margin: 2.5cm; }
+    h1 { font-size: 16pt; text-align: center; }
+    h2 { font-size: 14pt; margin-top: 1.2em; border-bottom: 1px solid #333; padding-bottom: 2px; }
+    h3 { font-size: 12pt; margin-top: 0.8em; }
+    p { text-align: justify; margin: 0.4em 0; }
+    ul { margin: 0.3em 0 0.6em 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono { font-family: Consolas, "Courier New", monospace; font-size: 10.5pt; }
+    .note { font-style: italic; color: #444; margin-top: 1.5em; }
+    a { color: #0645ad; }
+  </style>
+</head>
+<body>
+
+<h1>BÁO CÁO BỔ SUNG MÃ NGUỒN BACKEND<br />VÀ CẤU HÌNH CƠ SỞ DỮ LIỆU</h1>
+<p style="text-align:center"><strong>Dự án:</strong> Sàn giao dịch ô tô — Kiến trúc microservices (NestJS)</p>
+
+<h2>1. Liên kết GitHub repository</h2>
+<p><strong>Repository:</strong> <a href="https://github.com/TuanJS-TEC/Car-Marketplace-Microservices-Platform">https://github.com/TuanJS-TEC/Car-Marketplace-Microservices-Platform</a></p>
+<p>Trong repo có mã nguồn backend (monorepo npm workspaces), thư viện dùng chung, cấu hình Docker Compose cho PostgreSQL và các dịch vụ phụ trợ, cùng các script SQL trong thư mục <span class="mono">scripts/</span> và schema khởi tạo trong <span class="mono">libs/database/index.sql</span>.</p>
+
+<h2>2. Tổng quan kiến trúc backend</h2>
+<p>Dự án là <strong>monorepo</strong> Node.js (Node ≥ 20), framework <strong>NestJS</strong>, pattern <strong>CQRS</strong> ở các service nghiệp vụ chính, kết nối <strong>PostgreSQL</strong> qua <strong>TypeORM</strong>, đồng bộ schema có thể bật qua biến môi trường <span class="mono">TYPEORM_SYNC=true</span> (mặc định <span class="mono">false</span> — khuyến nghị dùng script SQL khi triển khai thật).</p>
+<p>Các ứng dụng trong <span class="mono">apps/</span>:</p>
+<ul>
+  <li><strong>api-gateway</strong> — Cổng HTTP, proxy tới listing-service, auth-service, payment-service (định tuyến <span class="mono">/api/v1/listings</span>, <span class="mono">/api/v1/auth</span>, <span class="mono">/api/v1/payments</span>, <span class="mono">/api/v1/payment</span> cho webhook).</li>
+  <li><strong>auth-service</strong> — Đăng nhập, đăng ký OTP, OTP công khai, đặt lại mật khẩu; hồ sơ người bán (JWT + SellerGuard): xem/sửa profile, upload avatar, đổi SĐT qua OTP.</li>
+  <li><strong>listing-service</strong> — Tin đăng xe (tạo/sửa/xóa), duyệt/từ chối/yêu cầu chỉnh sửa, tìm kiếm, lọc, so sánh, yêu thích, chia sẻ, báo cáo; quản trị: kiểm duyệt tin, xử lý báo cáo, khóa tài khoản, cảnh báo seller, gỡ tin hàng loạt (UC tương ứng trong code); upload ảnh tin và duyệt ảnh thủ công.</li>
+  <li><strong>payment-service</strong> — Phương thức thanh toán, tạo đơn, polling trạng thái đơn, khởi tạo VietQR / ví / ATM (sandbox demo), webhook VietQR, ví, ATM, hoàn tiền; endpoint admin hoàn tiền.</li>
+  <li><strong>user-service</strong> — API xác minh danh tính (gửi yêu cầu, trạng thái được phép bán, danh sách chờ duyệt phía admin trong controller).</li>
+  <li><strong>admin-service</strong> — Duyệt/từ chối yêu cầu xác minh danh tính (kênh admin).</li>
+  <li><strong>notification-service</strong> — API nội bộ gửi cảnh báo seller và thông báo khóa tài khoản (tích hợp luồng UC36/UC37).</li>
+  <li><strong>search-service</strong> — Khung dự án NestJS (health/hello); tìm kiếm nâng cao có thể mở rộng với Elasticsearch trong stack Docker đầy đủ.</li>
+</ul>
+<p>Thư viện dùng chung: <span class="mono">libs/common</span>, <span class="mono">libs/database</span> (TypeORM + entity user cơ bản), <span class="mono">libs/messaging</span>.</p>
+
+<h2>3. Cấu hình cơ sở dữ liệu và hạ tầng</h2>
+<h3>3.1. Docker Compose</h3>
+<ul>
+  <li><span class="mono">docker-compose.dev.yml</span> — Môi trường nhẹ: PostgreSQL 16, Redis 7, RabbitMQ (user <span class="mono">postgres</span>, mật khẩu <span class="mono">12345</span>, DB <span class="mono">car_marketplace</span>, cổng 5432).</li>
+  <li><span class="mono">docker-compose.yml</span> — Stack đầy đủ: thêm Elasticsearch 8, MinIO; PostgreSQL user <span class="mono">car</span> / mật khẩu <span class="mono">car</span>, DB <span class="mono">car_marketplace</span>.</li>
+</ul>
+<h3>3.2. Biến môi trường kết nối DB (TypeORM)</h3>
+<p>Mặc định trong code: <span class="mono">POSTGRES_HOST</span>, <span class="mono">POSTGRES_PORT</span>, <span class="mono">POSTGRES_USER</span>, <span class="mono">POSTGRES_PASSWORD</span>, <span class="mono">POSTGRES_DB</span> (database mặc định <span class="mono">car_marketplace</span>). Gateway dùng thêm <span class="mono">LISTING_SERVICE_URL</span>, <span class="mono">AUTH_SERVICE_URL</span>, <span class="mono">PAYMENT_SERVICE_URL</span>.</p>
+
+<h2>4. Script SQL và “migration”</h2>
+<p>Dự án cung cấp schema và dữ liệu dưới dạng script SQL (không bắt buộc dùng công cụ migration riêng nếu triển khai bằng file .sql):</p>
+<ul>
+  <li><strong><span class="mono">libs/database/index.sql</span></strong> — Script tạo database <span class="mono">car_marketplace</span>, định nghĩa ENUM, toàn bộ bảng nghiệp vụ (người dùng, tin đăng, ảnh, giao dịch, gói, báo cáo, thông báo, v.v.).</li>
+  <li><strong><span class="mono">scripts/pg-auth-schema-patch.sql</span></strong> — Bổ sung cột/bảng phục vụ auth-service (OTP, đăng ký chờ, cột camelCase trên <span class="mono">users</span>) khi <span class="mono">TYPEORM_SYNC=false</span>.</li>
+  <li><strong><span class="mono">scripts/seed-sample-data.sql</span></strong> — Dữ liệu mẫu + tài khoản demo (admin/seller/buyer), có cảnh báo TRUNCATE — chỉ dùng dev.</li>
+  <li><strong><span class="mono">scripts/payment-wallet-columns-patch.sql</span></strong>, <strong><span class="mono">scripts/payment-atm-columns-patch.sql</span></strong>, <strong><span class="mono">scripts/payment-refund-uc34-patch.sql</span></strong> — Patch cột/bảng liên quan thanh toán (ví, ATM, hoàn tiền) theo từng giai đoạn tính năng.</li>
+</ul>
+
+<h2>5. Mô tả ngắn gọn các chức năng đã làm được</h2>
+<ul>
+  <li><strong>Xác thực &amp; tài khoản:</strong> Đăng nhập JWT; đăng ký qua OTP; gửi/xác thực OTP (đổi mật khẩu, xác thực SĐT); hoàn tất đặt lại mật khẩu.</li>
+  <li><strong>Hồ sơ người bán:</strong> Xem/cập nhật thông tin; upload avatar; đổi số điện thoại có OTP.</li>
+  <li><strong>Tin đăng xe:</strong> Tạo tin chờ duyệt; danh sách/chi tiết (chỉ tin đã duyệt cho người xem); sửa/xóa; duyệt/từ chối; gói đăng tin; tìm kiếm từ khóa; lọc nâng cao; so sánh tối đa 3 tin; yêu thích; chia sẻ (tăng share count); xem SĐT; link chat Zalo; báo cáo vi phạm.</li>
+  <li><strong>Ảnh tin:</strong> Hướng dẫn upload, upload multipart, luồng kiểm tra/duyệt ảnh (kể cả duyệt thủ công).</li>
+  <li><strong>Quản trị tin &amp; vi phạm:</strong> Danh sách/chi tiết tin chờ duyệt; duyệt/từ chối/yêu cầu chỉnh sửa; quản lý báo cáo và xử lý (cảnh báo, gỡ tin hàng loạt, khóa tài khoản, lịch sử cảnh báo/gỡ tin).</li>
+  <li><strong>Xác minh danh tính:</strong> Người dùng gửi yêu cầu; admin/user-service duyệt hoặc từ chối; kiểm tra điều kiện được bán.</li>
+  <li><strong>Thanh toán:</strong> Liệt kê phương thức; tạo đơn (JWT + seller); tra cứu đơn; VietQR / ví / ATM (sandbox); webhook xác nhận thanh toán; hoàn tiền (admin).</li>
+  <li><strong>Thông báo:</strong> Endpoint nội bộ gửi cảnh báo cho seller và thông báo khóa tài khoản.</li>
+  <li><strong>API Gateway:</strong> Gom entry point REST cho listings, auth, payments và webhook thanh toán thống nhất.</li>
+</ul>
+
+<p class="note"><strong>Lưu ý khi nộp file Word (.docx):</strong> Mở file HTML này bằng Microsoft Word, kiểm tra định dạng, rồi chọn <em>File → Save As → Định dạng Word (*.docx)</em>. Nội dung đã dùng font Times New Roman và cấu trúc tiêu đề phù hợp báo cáo.</p>
+
+</body>
+</html>

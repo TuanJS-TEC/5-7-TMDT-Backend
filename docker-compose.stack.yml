@@ -1,0 +1,243 @@
+# Stack đầy đủ: Postgres, Redis, RabbitMQ + tất cả microservices + Nginx (web).
+# Chạy từ thư mục gốc repo:
+#   npm run docker:stack:up
+#   hoặc: docker compose -f docker-compose.stack.yml up --build
+# Giao diện: http://localhost:8080  |  API Gateway trực tiếp: http://localhost:3000 (hoặc cổng API_GATEWAY_PUBLISH_PORT trong .env)
+#
+# Lần đầu build có thể mất vài phút (npm ci + nest build toàn monorepo).
+# Ảnh runner chỉ build một lần (service api-gateway); các service Nest khác chỉ image —
+# tránh lỗi Buildx "image ... already exists" khi nhiều target cùng tag chạy song song.
+#
+# File .env ở thư mục gốc được Docker Compose đọc cho interpolation: tránh ký tự $ trong
+# giá trị (hoặc dùng $$). Nếu không, sẽ có cảnh báo "variable is not set" cho từng phần sau $.
+
+name: car-marketplace-stack
+
+# Một network chung để DNS nội bộ (postgres, rabbitmq, …) luôn phân giải được giữa các container.
+networks:
+  stack:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    networks:
+      - stack
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: car_marketplace
+    # Host 5432 often already used by a local Postgres. Override in repo .env: POSTGRES_PUBLISH_PORT=5433
+    ports:
+      - "${POSTGRES_PUBLISH_PORT:-5432}:5432"
+    volumes:
+      - pgdata_stack:/var/lib/postgresql/data
+      - ./scripts/payment-schema.sql:/docker-entrypoint-initdb.d/02-payment-schema.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d car_marketplace" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - stack
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: marketplace
+      RABBITMQ_DEFAULT_PASS: marketplace
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    networks:
+      - stack
+
+  auth-service:
+    image: "car-marketplace-runner:local"
+    working_dir: /app/apps/auth-service
+    command: [ "node", "dist/main.js" ]
+    environment:
+      PORT: "3001"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: car_marketplace
+      TYPEORM_SYNC: "true"
+      TYPEORM_LOGGING: "false"
+      JWT_SECRET: "docker-dev-jwt-secret-change-me"
+      JWT_EXPIRES_SEC: "3600"
+      INTERNAL_API_KEY: "docker-internal-api-key"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - stack
+
+  listing-service:
+    image: "car-marketplace-runner:local"
+    working_dir: /app/apps/listing-service
+    command: [ "node", "dist/main.js" ]
+    environment:
+      PORT: "3002"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: car_marketplace
+      TYPEORM_SYNC: "true"
+      TYPEORM_LOGGING: "false"
+      AUTH_SERVICE_URL: http://auth-service:3001
+      INTERNAL_API_KEY: "docker-internal-api-key"
+      RABBITMQ_URL: amqp://marketplace:marketplace@rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - stack
+
+  payment-service:
+    image: "car-marketplace-runner:local"
+    working_dir: /app/apps/payment-service
+    command: [ "node", "dist/main.js" ]
+    environment:
+      PORT: "3004"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: car_marketplace
+      TYPEORM_SYNC: "true"
+      TYPEORM_LOGGING: "false"
+      JWT_SECRET: "docker-dev-jwt-secret-change-me"
+      RABBITMQ_URL: amqp://marketplace:marketplace@rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - stack
+
+  user-service:
+    image: "car-marketplace-runner:local"
+    working_dir: /app/apps/user-service
+    command: [ "node", "dist/main.js" ]
+    environment:
+      PORT: "3005"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: car_marketplace
+      TYPEORM_SYNC: "true"
+      TYPEORM_LOGGING: "false"
+    restart: unless-stopped
+    networks:
+      - stack
+
+  notification-service:
+    image: "car-marketplace-runner:local"
+    working_dir: /app/apps/notification-service
+    command: [ "node", "dist/main.js" ]
+    environment:
+      PORT: "3007"
+      RABBITMQ_URL: amqp://marketplace:marketplace@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - stack
+
+  admin-service:
+    image: "car-marketplace-runner:local"
+    working_dir: /app/apps/admin-service
+    command: [ "node", "dist/main.js" ]
+    environment:
+      PORT: "3006"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: car_marketplace
+      TYPEORM_SYNC: "true"
+      TYPEORM_LOGGING: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - stack
+
+  search-service:
+    image: "car-marketplace-runner:local"
+    working_dir: /app/apps/search-service
+    command: [ "node", "dist/main.js" ]
+    environment:
+      PORT: "3008"
+    restart: unless-stopped
+    networks:
+      - stack
+
+  # Build ảnh Node chung (một lần); mọi microservice khác dùng cùng tag ở trên.
+  api-gateway:
+    image: "car-marketplace-runner:local"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    working_dir: /app/apps/api-gateway
+    command: [ "node", "dist/main.js" ]
+    # Nếu máy đã chạy gateway local trên 3000: trong .env đặt API_GATEWAY_PUBLISH_PORT=3003
+    ports:
+      - "${API_GATEWAY_PUBLISH_PORT:-3000}:3000"
+    environment:
+      PORT: "3000"
+      LISTING_SERVICE_URL: http://listing-service:3002
+      AUTH_SERVICE_URL: http://auth-service:3001
+      PAYMENT_SERVICE_URL: http://payment-service:3004
+    depends_on:
+      - auth-service
+      - listing-service
+      - payment-service
+    restart: unless-stopped
+    networks:
+      - stack
+
+  web:
+    image: "car-marketplace-web:local"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+    networks:
+      - stack
+
+volumes:
+  pgdata_stack: {}

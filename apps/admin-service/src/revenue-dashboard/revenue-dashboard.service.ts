@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
-import { PaymentOrderOrmEntity } from '../../../../libs/database/src/entities/payment-order.orm.entity';
+import { PaymentOrderOrmEntity } from '@car-marketplace/database';
 import { RecentTransaction, MonthlyRevenue } from './revenue-dashboard.mock';
 
 export interface RevenueDashboardDto {

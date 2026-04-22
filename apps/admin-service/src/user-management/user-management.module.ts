@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserOrmEntity } from '../../../../libs/database/src/entities/user.orm.entity';
+import { UserOrmEntity } from '@car-marketplace/database';
 import { UserManagementController } from './user-management.controller';
 import { UserManagementService } from './user-management.service';
 

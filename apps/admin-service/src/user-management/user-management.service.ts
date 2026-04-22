@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserOrmEntity } from '../../../../libs/database/src/entities/user.orm.entity';
+import { UserOrmEntity } from '@car-marketplace/database';
 
 @Injectable()
 export class UserManagementService {

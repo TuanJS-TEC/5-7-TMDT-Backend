@@ -4,7 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy } from './jwt.strategy';
 // import { SellerGuard } from './seller.guard';
-import { SellerGuard } from '@car-marketplace/common/src';
+import { SellerGuard } from '@car-marketplace/common';
 import { AdminGuard } from './admin.guard';
 
 @Module({
