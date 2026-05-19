@@ -28,6 +28,12 @@ export class GetListingListHandler
       query.status ?? defaultStatus, // Nếu không có status, dùng default
       query.sortBy,
       query.sortOrder,
+      query.search,
+      query.make,
+      query.fuelType,
+      query.transmission,
+      query.minPrice,
+      query.maxPrice,
     );
   }
 }

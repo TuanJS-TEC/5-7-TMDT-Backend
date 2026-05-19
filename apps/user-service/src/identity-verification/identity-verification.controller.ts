@@ -21,11 +21,6 @@ export class IdentityVerificationController {
     return this.service.getCanSellStatus(userId);
   }
 
-  @Get('mock/users')
-  getMockUsers() {
-    return this.service.listMockUsers();
-  }
-
   @Get('admin/requests')
   getRequests(@Query('status') status?: VerificationStatus) {
     return this.service.listRequests(status);

@@ -7,6 +7,7 @@ import { StatusBadge, PackageBadge } from '../components/ui/Badge';
 import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import { PageError } from '../components/ui/PageState';
+import { fallbackListingImage, resolveListingImageUrl } from '../utils/image';
 
 interface SellerInfo { id?: string; fullName?: string; accountType?: string; displayPhone?: string; }
 type Detail = ListingDto & { seller?: SellerInfo };
@@ -113,25 +114,39 @@ export function ListingDetailPage() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-muted">
-        <Link to="/" className="hover:text-brand-700 transition-colors">Xe đang bán</Link>
+        <Link to="/" className="hover:text-brand-700 transition-colors">Find a car</Link>
         <span>/</span>
         <span className="text-ink">{listing.carMake} {listing.carModel}</span>
       </nav>
 
+      <section className="rounded-3xl border border-brand-100 bg-gradient-to-br from-white via-brand-50/60 to-brand-100/40 p-5 md:p-7">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Verified listing</p>
+            <h1 className="mt-1 font-display text-2xl font-bold text-ink md:text-3xl">{listing.title}</h1>
+            <p className="mt-2 text-sm text-muted">
+              {listing.carMake} {listing.carModel} · {listing.carYear} · {new Intl.NumberFormat('vi-VN').format(listing.mileageKm)} km
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs uppercase tracking-wide text-muted">Price</p>
+            <p className="font-display text-3xl font-bold text-brand-700">{formatPrice(listing.priceVnd)}</p>
+          </div>
+        </div>
+      </section>
+
       <article className="grid gap-8 lg:grid-cols-[1fr_380px]">
-        {/* ── Gallery ── */}
         <div className="space-y-3">
-          {/* Main image */}
           <div
             className="relative overflow-hidden rounded-2xl border border-brand-100 bg-brand-50 cursor-zoom-in shadow-sm"
             onClick={() => setLightbox(true)}
           >
             <img
-              src={images[activeImg]}
+              src={resolveListingImageUrl(images[activeImg], listing.id)}
               alt={listing.title}
               className="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-102"
+              onError={(e) => { e.currentTarget.src = fallbackListingImage(listing.id); }}
             />
             {/* Badges overlay */}
             <div className="absolute top-3 left-3 flex gap-2">
@@ -142,10 +157,9 @@ export function ListingDetailPage() {
               {activeImg + 1} / {images.length}
             </div>
           </div>
-          {/* Thumbnails */}
           {images.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {images.slice(0, 8).map((url, i) => (
+              {images.map((url, i) => (
                 <button
                   key={url}
                   onClick={() => setActiveImg(i)}
@@ -153,24 +167,26 @@ export function ListingDetailPage() {
                     i === activeImg ? 'border-brand-500 shadow-md shadow-brand-300' : 'border-transparent opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <img src={url} alt="" className="h-16 w-22 object-cover" />
+                  <img
+                    src={resolveListingImageUrl(url, `${listing.id}-${i}`)}
+                    alt=""
+                    className="h-16 w-22 object-cover"
+                    onError={(e) => { e.currentTarget.src = fallbackListingImage(`${listing.id}-${i}`); }}
+                  />
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        {/* ── Info sidebar ── */}
         <div className="flex flex-col gap-5">
-          {/* Price card (sticky on large screens) */}
           <div className="card p-5 top-24 lg:sticky">
             <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">
               {listing.carMake} {listing.carModel} · {listing.carYear}
             </p>
-            <h1 className="mt-1.5 font-display text-xl font-bold text-brand-900 leading-snug">{listing.title}</h1>
+            <h2 className="mt-1.5 font-display text-xl font-bold text-brand-900 leading-snug">{listing.title}</h2>
             <p className="mt-3 font-display text-3xl font-bold text-brand-700">{formatPrice(listing.priceVnd)}</p>
 
-            {/* Specs grid */}
             <dl className="mt-5 grid grid-cols-2 gap-2.5 text-sm">
               {[
                 { dt: '📅 Năm SX',   dd: String(listing.carYear) },
@@ -185,7 +201,6 @@ export function ListingDetailPage() {
               ))}
             </dl>
 
-            {/* Seller info */}
             <div className="mt-5 border-t border-brand-100 pt-4">
               <p className="text-xs text-muted uppercase tracking-wide font-semibold mb-2">Người bán</p>
               <p className="font-medium text-ink">
@@ -198,7 +213,6 @@ export function ListingDetailPage() {
               </p>
             </div>
 
-            {/* CTA buttons */}
             <div className="mt-4 flex flex-col gap-2.5">
               <button
                 type="button"
@@ -229,17 +243,38 @@ export function ListingDetailPage() {
         </div>
       </article>
 
-      {/* ── Description ── */}
       <section className="card p-6">
-        <h2 className="font-display text-lg font-semibold text-brand-900 mb-3">📝 Mô tả chi tiết</h2>
-        <p className="whitespace-pre-wrap text-muted leading-relaxed text-sm">{listing.description}</p>
+        <h2 className="font-display text-lg font-semibold text-brand-900 mb-3">Chi tiết xe</h2>
+        <p className="whitespace-pre-wrap break-words text-muted leading-relaxed text-sm">{listing.description}</p>
       </section>
 
-      {/* ── Lightbox ── */}
+      <section className="grid gap-4 rounded-3xl border border-brand-100 bg-white p-5 md:grid-cols-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Step 1</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Xem đúng xe</h3>
+          <p className="mt-2 text-sm text-muted">Ảnh thực tế, thông số rõ ràng và trạng thái tin đăng minh bạch.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Step 2</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Liên hệ seller</h3>
+          <p className="mt-2 text-sm text-muted">Mở số điện thoại trực tiếp để trao đổi nhanh về xe và lịch xem.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Step 3</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Lưu và quyết định</h3>
+          <p className="mt-2 text-sm text-muted">Lưu vào yêu thích để so sánh nhiều lựa chọn trước khi chốt mua.</p>
+        </div>
+      </section>
+
       {lightbox && (
         <div className="overlay" onClick={() => setLightbox(false)}>
-          <div className="relative max-w-4xl w-full animate-scale-in" onClick={(e) => e.stopPropagation()}>
-            <img src={images[activeImg]} alt="" className="w-full rounded-2xl shadow-2xl" />
+          <div className="relative max-w-4xl w-full animate-scale-in flex justify-center" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={resolveListingImageUrl(images[activeImg], listing.id)}
+              alt=""
+              className="w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl"
+              onError={(e) => { e.currentTarget.src = fallbackListingImage(listing.id); }}
+            />
             <button
               className="absolute -top-4 -right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg text-ink hover:bg-brand-50"
               onClick={() => setLightbox(false)}

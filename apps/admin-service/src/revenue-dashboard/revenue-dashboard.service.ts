@@ -1,8 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository } from 'typeorm';
 import { PaymentOrderOrmEntity } from '@car-marketplace/database';
-import { RecentTransaction, MonthlyRevenue } from './revenue-dashboard.mock';
+
+interface RecentTransaction {
+  id: string;
+  sellerId: string;
+  packageType: string;
+  amountVnd: number;
+  paidAt: string;
+}
+
+interface MonthlyRevenue {
+  month: string;
+  totalVnd: number;
+  transactionCount: number;
+}
 
 export interface RevenueDashboardDto {
   totalRevenue: number;

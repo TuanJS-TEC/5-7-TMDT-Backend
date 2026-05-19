@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import type { ListingDto } from '../types/listing';
 import { useToast } from '../components/ui/Toast';
 import { PageEmpty, PageError, PageLoading } from '../components/ui/PageState';
+import { fallbackListingImage, resolveListingImageUrl } from '../utils/image';
 
 function formatPrice(vnd: number) {
   if (vnd >= 1_000_000_000) return (vnd / 1_000_000_000).toFixed(1).replace('.0','') + ' tỷ ₫';
@@ -84,10 +85,11 @@ export function FavoritesPage() {
             >
               <div className="relative aspect-[16/10] overflow-hidden bg-brand-50">
                 <img
-                  src={l.imageUrls[0] ?? `https://picsum.photos/seed/${l.id}/800/500`}
+                  src={resolveListingImageUrl(l.imageUrls[0], l.id)}
                   alt={l.title}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
+                  onError={(e) => { e.currentTarget.src = fallbackListingImage(l.id); }}
                 />
                 <span className="absolute left-2.5 top-2.5 badge bg-red-500 text-white">♥</span>
               </div>

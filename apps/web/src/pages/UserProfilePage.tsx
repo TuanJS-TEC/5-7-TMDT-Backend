@@ -40,20 +40,21 @@ export function UserProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 animate-fade-in" aria-live="polite">
-      <h1 className="font-display text-2xl font-bold text-brand-900">Tài khoản của tôi</h1>
+    <div className="mx-auto max-w-4xl space-y-6 animate-fade-in" aria-live="polite">
+      <section className="rounded-3xl border border-brand-100 bg-gradient-to-br from-white via-brand-50/60 to-brand-100/40 p-5 md:p-7">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">My account</p>
+        <h1 className="mt-1 font-display text-3xl font-bold text-ink">Hồ sơ cá nhân</h1>
+        <p className="mt-2 text-sm text-muted">Quản lý thông tin tài khoản, vai trò và thao tác nhanh trong một nơi.</p>
+      </section>
 
-      {/* Profile card */}
       <div className="card overflow-hidden">
-        {/* Header gradient */}
         <div className={`h-24 bg-gradient-to-br ${roleBgClass(currentUser.role)}`} />
         <div className="px-6 pb-6">
-          {/* Avatar */}
           <div className={`-mt-10 mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br ${roleBgClass(currentUser.role)} font-display text-2xl font-bold text-white shadow-lg`}>
             {initials || '?'}
           </div>
 
-          <h2 className="font-display text-xl font-bold text-brand-900">{currentUser.fullName}</h2>
+          <h2 className="font-display text-xl font-bold text-brand-900 break-words">{currentUser.fullName}</h2>
           <p className="text-sm text-muted">{currentUser.phone}</p>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -69,7 +70,6 @@ export function UserProfilePage() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="card p-5 text-center">
           <p className="font-display text-2xl font-bold text-brand-700">{currentUser.freeListingCredits}</p>
@@ -85,7 +85,6 @@ export function UserProfilePage() {
         </div>
       </div>
 
-      {/* Info */}
       <div className="card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Thông tin tài khoản</h3>
         <dl className="divide-y divide-brand-50">
@@ -109,7 +108,6 @@ export function UserProfilePage() {
         </div>
       </div>
 
-      {/* Quick links */}
       <div className="card p-6">
         <h3 className="font-semibold text-ink mb-4">Thao tác nhanh</h3>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -126,6 +124,24 @@ export function UserProfilePage() {
           <Link to="/"          className="btn btn-ghost   justify-center">🚗 Xem xe đang bán</Link>
         </div>
       </div>
+
+      <section className="grid gap-4 rounded-3xl border border-brand-100 bg-white p-5 md:grid-cols-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Status</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">{roleLabel(currentUser.role)}</h3>
+          <p className="mt-2 text-sm text-muted">Role hiện tại xác định quyền truy cập tính năng trên hệ thống.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Account Type</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">{currentUser.accountType}</h3>
+          <p className="mt-2 text-sm text-muted">Loại tài khoản phục vụ nhu cầu mua xe cá nhân hoặc bán xe chuyên nghiệp.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Credits</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">{currentUser.freeListingCredits} free</h3>
+          <p className="mt-2 text-sm text-muted">Theo dõi số lượt đăng miễn phí trước khi cần nâng cấp gói.</p>
+        </div>
+      </section>
     </div>
   );
 }

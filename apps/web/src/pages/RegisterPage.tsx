@@ -108,16 +108,17 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-8 animate-fade-in">
-      <div className="w-full max-w-lg">
-        <div className="text-center mb-6">
-          <h1 className="font-display text-3xl font-bold text-brand-900">Tạo tài khoản</h1>
-          <p className="mt-2 text-sm text-muted">
-            Đã có tài khoản?{' '}
-            <Link to="/login" className="font-semibold text-brand-600 hover:underline">Đăng nhập</Link>
-          </p>
-        </div>
+    <div className="min-h-[80vh] py-8 animate-fade-in space-y-6">
+      <section className="rounded-3xl border border-brand-100 bg-gradient-to-br from-white via-brand-50/60 to-brand-100/40 p-5 md:p-7">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Create account</p>
+        <h1 className="mt-1 font-display text-3xl font-bold text-ink">Đăng ký tài khoản mới</h1>
+        <p className="mt-2 text-sm text-muted">
+          Đã có tài khoản?{' '}
+          <Link to="/login" className="font-semibold text-brand-600 hover:underline">Đăng nhập</Link>
+        </p>
+      </section>
 
+      <div className="mx-auto w-full max-w-lg">
         <div className="card p-8">
           <StepIndicator current={step} />
 
@@ -242,6 +243,24 @@ export function RegisterPage() {
           )}
         </div>
       </div>
+
+      <section className="grid gap-4 rounded-3xl border border-brand-100 bg-white p-5 md:grid-cols-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Step 1</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Điền thông tin</h3>
+          <p className="mt-2 text-sm text-muted">Nhập họ tên, số điện thoại, mật khẩu và chọn loại tài khoản phù hợp.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Step 2</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Xác thực OTP</h3>
+          <p className="mt-2 text-sm text-muted">Nhập mã OTP để hoàn tất đăng ký và kích hoạt tài khoản ngay.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Step 3</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Bắt đầu sử dụng</h3>
+          <p className="mt-2 text-sm text-muted">Đăng nhập để tìm xe, lưu xe yêu thích hoặc đăng bán xe của bạn.</p>
+        </div>
+      </section>
     </div>
   );
 }

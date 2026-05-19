@@ -21,8 +21,7 @@ import { ListingModificationRequestedHandler } from './application/events/listin
 import { ListingWriteRepository } from './infrastructure/persistence/write/listing.write.repository';
 import { ListingReadRepository } from './infrastructure/persistence/read/listing.read.repository';
 import { RabbitMqPublisher } from './infrastructure/messaging/rabbitmq.publisher';
-import { FAVORITE_STORE, LISTING_STORE } from './infrastructure/persistence/listing.store.token';
-import type { ListingRecord } from './infrastructure/persistence/listing-record';
+import { FavoriteOrmEntity } from './infrastructure/persistence/typeorm/favorite.orm.entity';
 import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler';
 import { FilterListingsHandler } from './application/queries/filter-listings/filter-listings.handler';
 import { GetListingPackagesHandler } from './application/queries/get-listing-packages/get-listing-packages.handler';
@@ -33,8 +32,8 @@ import { PushListingHandler } from './application/commands/push-listing/push-lis
 import { FeatureListingHandler } from './application/commands/feature-listing/feature-listing.handler';
 import { ReportReadRepository } from './infrastructure/persistence/read/report.read.repository';
 import { ReportWriteRepository } from './infrastructure/persistence/write/report.write.repository';
-import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
 import { ReportRecord } from './infrastructure/persistence/report-record';
+import { ReportOrmEntity } from './infrastructure/persistence/typeorm/report.orm.entity';
 import { ProfileService } from './infrastructure/auth/profile.service';
 import { CompareListingsHandler } from './application/queries/compare-listings/compare-listings.handler';
 import { GetListingStatsHandler } from './application/queries/get-listing-stats/get-listing-stats.handler';
@@ -119,26 +118,10 @@ const eventHandlers = [
   // ListingSoldEventHandler,
 ];
 
-let createMockListingStore: any = () => new Map();
-let createMockFavoriteStore: any = () => new Map();
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mockListing = require('./infrastructure/persistence/mock-listing.store');
-  createMockListingStore = mockListing.createMockListingStore || createMockListingStore;
-  createMockFavoriteStore = mockListing.createMockFavoriteStore || createMockFavoriteStore;
-} catch (e) { }
-
-let createMockReportStore: any = () => new Map();
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mockReport = require('./infrastructure/persistence/mock-report.store');
-  createMockReportStore = mockReport.createMockReportStore || createMockReportStore;
-} catch (e) { }
-
 const typeOrmListing =
   process.env.SKIP_DATABASE === 'true'
     ? []
-    : [TypeOrmModule.forFeature([ListingOrmEntity])];
+    : [TypeOrmModule.forFeature([ListingOrmEntity, FavoriteOrmEntity, ReportOrmEntity])];
 
 @Module({
   // imports: [CqrsModule, ...typeOrmListing],
@@ -151,14 +134,6 @@ const typeOrmListing =
   controllers: [ListingController],
   providers: [
     {
-      provide: LISTING_STORE,
-      useFactory: createMockListingStore,
-    },
-    {
-      provide: REPORT_STORE,
-      useFactory: createMockReportStore,
-    },
-    {
       provide: SELLER_WARNING_STORE,
       useFactory: () => new Map(),
     },
@@ -170,10 +145,6 @@ const typeOrmListing =
     ListingReadRepository,
     ReportReadRepository,
     ReportWriteRepository,
-    {
-      provide: FAVORITE_STORE,
-      useFactory: createMockFavoriteStore,
-    },
     FavoriteReadRepository,
     FavoriteWriteRepository,
     RabbitMqPublisher,

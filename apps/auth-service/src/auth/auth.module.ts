@@ -23,6 +23,7 @@ import { SmsNotificationService } from './sms-notification.service';
 import { AdminAccountService } from '../internal/admin-account.service';
 import { InternalApiKeyGuard } from '../internal/internal-api-key.guard';
 import { InternalUsersController } from '../internal/internal-users.controller';
+import { SuperadminBootstrapService } from './superadmin-bootstrap.service';
 
 const typeOrmAuth =
   process.env.SKIP_DATABASE === 'true'
@@ -71,6 +72,7 @@ const internalUc37 =
     JwtAuthGuard,
     SellerGuard,
     ProfileService,
+    SuperadminBootstrapService,
     ...internalUc37.providers,
   ],
 })

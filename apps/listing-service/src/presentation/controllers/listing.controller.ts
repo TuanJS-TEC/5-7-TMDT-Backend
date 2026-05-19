@@ -128,9 +128,27 @@ export class ListingController {
     @Query('status') status?: string,
     @Query('sortBy', new DefaultValuePipe('createdAt')) sortBy: string = 'createdAt',
     @Query('sortOrder', new DefaultValuePipe('desc')) sortOrder: 'asc' | 'desc' = 'desc',
+    @Query('search') search?: string,
+    @Query('make') make?: string,
+    @Query('fuelType') fuelType?: string,
+    @Query('transmission') transmission?: string,
+    @Query('minPrice') minPrice?: string,
+    @Query('maxPrice') maxPrice?: string,
   ) {
     return this.queryBus.execute(
-      new GetListingListQuery(page, limit, status, sortBy, sortOrder),
+      new GetListingListQuery(
+        page, 
+        limit, 
+        status, 
+        sortBy, 
+        sortOrder,
+        search,
+        make,
+        fuelType,
+        transmission,
+        minPrice ? Number(minPrice) : undefined,
+        maxPrice ? Number(maxPrice) : undefined,
+      ),
     );
   }
 

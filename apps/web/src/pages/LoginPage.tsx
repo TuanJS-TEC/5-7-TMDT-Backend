@@ -48,8 +48,14 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center animate-fade-in">
-      <div className="w-full max-w-4xl overflow-hidden rounded-3xl shadow-xl shadow-brand-900/10 border border-brand-100 grid lg:grid-cols-2">
+    <div className="min-h-[80vh] animate-fade-in space-y-6">
+      <section className="rounded-3xl border border-brand-100 bg-gradient-to-br from-white via-brand-50/60 to-brand-100/40 p-5 md:p-7">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Welcome back</p>
+        <h1 className="mt-1 font-display text-3xl font-bold text-ink">Đăng nhập tài khoản</h1>
+        <p className="mt-2 text-sm text-muted">Tiếp tục hành trình tìm xe, lưu xe yêu thích và liên hệ người bán.</p>
+      </section>
+
+      <div className="w-full overflow-hidden rounded-3xl shadow-xl shadow-brand-900/10 border border-brand-100 grid lg:grid-cols-2">
         {/* ── Left: Brand panel ── */}
         <div className="relative hidden lg:flex flex-col justify-between bg-gradient-to-br from-brand-700 via-brand-800 to-brand-900 p-10 text-white overflow-hidden">
           <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
@@ -63,8 +69,8 @@ export function LoginPage() {
           <div className="relative">
             <div className="text-5xl mb-6">🚗</div>
             <h2 className="font-display text-2xl font-bold leading-snug">
-              Chào mừng trở lại!<br />
-              <span className="text-brand-200">Đăng nhập để tiếp tục</span>
+              Find, Buy, Sell<br />
+              <span className="text-brand-200">all in one place</span>
             </h2>
             <p className="mt-3 text-sm text-white/65 leading-relaxed">
               Khám phá hàng nghìn xe đã qua sử dụng, lưu yêu thích, và liên hệ người bán ngay hôm nay.

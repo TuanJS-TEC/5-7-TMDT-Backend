@@ -217,6 +217,7 @@ services:
       LISTING_SERVICE_URL: http://listing-service:3002
       AUTH_SERVICE_URL: http://auth-service:3001
       PAYMENT_SERVICE_URL: http://payment-service:3004
+      ADMIN_SERVICE_URL: http://admin-service:3006
     depends_on:
       - auth-service
       - listing-service

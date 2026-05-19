@@ -5,6 +5,7 @@ import type { ListingDto } from '../types/listing';
 import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import { PageEmpty, PageError } from '../components/ui/PageState';
+import { fallbackListingImage, resolveListingImageUrl } from '../utils/image';
 
 type PendingItem = ListingDto & { moderationStatus?: string };
 interface PendingResult { items: PendingItem[]; total: number; page: number; limit: number; }
@@ -109,9 +110,10 @@ export function AdminModerationPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img
-                          src={row.imageUrls[0] ?? `https://picsum.photos/seed/${row.id}/100/70`}
+                          src={resolveListingImageUrl(row.imageUrls[0], row.id)}
                           alt=""
                           className="h-12 w-16 rounded-lg object-cover shrink-0 hidden sm:block"
+                          onError={(e) => { e.currentTarget.src = fallbackListingImage(row.id); }}
                         />
                         <div>
                           <div className="font-semibold text-ink line-clamp-1">{row.title}</div>

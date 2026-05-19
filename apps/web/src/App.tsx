@@ -11,6 +11,7 @@ import { FavoritesPage } from './pages/FavoritesPage';
 import { SellerOrdersPage } from './pages/SellerOrdersPage';
 import { CreateListingPage } from './pages/CreateListingPage';
 import { AdminModerationPage } from './pages/AdminModerationPage';
+import { AdminRevenueDashboardPage } from './pages/AdminRevenueDashboardPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { UserProfilePage } from './pages/UserProfilePage';
 
@@ -47,6 +48,11 @@ export function App() {
           <Route path="admin/moderation" element={
             <RequireAuth roles={['admin']}>
               <AdminModerationPage />
+            </RequireAuth>
+          } />
+          <Route path="admin/dashboard" element={
+            <RequireAuth roles={['admin']}>
+              <AdminRevenueDashboardPage />
             </RequireAuth>
           } />
 

@@ -4,6 +4,7 @@ import { api, ApiError } from '../api/client';
 import type { ListingDto, ListingListResult } from '../types/listing';
 import { PackageBadge } from '../components/ui/Badge';
 import { PageEmpty, PageError } from '../components/ui/PageState';
+import { fallbackListingImage, resolveListingImageUrl } from '../utils/image';
 
 function formatPrice(vnd: number) {
   if (vnd >= 1_000_000_000) return (vnd / 1_000_000_000).toFixed(1).replace('.0', '') + ' tỷ ₫';
@@ -14,11 +15,13 @@ function formatPrice(vnd: number) {
 const FUEL_LABELS: Record<string, string> = {
   petrol: 'Xăng', diesel: 'Dầu', electric: 'Điện', hybrid: 'Hybrid', other: 'Khác',
 };
+
 const TRANS_LABELS: Record<string, string> = {
   automatic: 'Tự động', manual: 'Số sàn', 'semi-automatic': 'Bán tự động',
 };
 
 const CAR_MAKES = ['', 'Toyota', 'Honda', 'Mazda', 'Hyundai', 'Kia', 'Ford', 'VinFast', 'Mercedes', 'BMW'];
+const TRENDING_TAGS = ['EVs', 'SUV', 'Sedan', 'Hybrid', 'Under 700M', 'Family Car'];
 
 interface Filters {
   make: string;
@@ -52,10 +55,11 @@ function CarCard({ listing }: { listing: ListingDto }) {
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-brand-50">
         <img
-          src={listing.imageUrls[0] ?? `https://picsum.photos/seed/${listing.id}/800/500`}
+          src={resolveListingImageUrl(listing.imageUrls[0], listing.id)}
           alt={listing.title}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-108"
           loading="lazy"
+          onError={(e) => { e.currentTarget.src = fallbackListingImage(listing.id); }}
         />
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -142,131 +146,173 @@ export function HomePage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* ── Hero ─────────────────────────────────────── */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-8 md:p-12 text-white shadow-xl shadow-brand-800/20">
-        {/* Decorative blobs */}
-        <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-400/20 blur-2xl" />
-        <div className="relative max-w-2xl">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            {total > 0 ? `${total} xe đang bán` : 'Sàn xe đã kiểm duyệt'}
+      <section className="relative overflow-hidden rounded-3xl border border-brand-100 bg-gradient-to-br from-white via-brand-50 to-brand-100/70 p-6 md:p-10">
+        <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-6">
+            <p className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-700 shadow-sm">
+              NEN TANG MUA BAN O TO DA KIEM DUYET
+            </p>
+            <h1 className="font-display text-4xl font-bold leading-tight text-ink md:text-6xl">
+              Tim xe phu hop
+              <span className="block text-brand-700">cho nhu cau cua ban</span>
+            </h1>
+            <p className="max-w-2xl text-base text-muted md:text-lg">
+              Cam hung giao dien theo Carwow: tra cuu nhanh, loc thong minh, danh sach de doc va thong tin minh bach.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {TRENDING_TAGS.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className="rounded-full border border-brand-200 bg-white px-3 py-1.5 text-sm font-medium text-ink transition hover:border-brand-400 hover:text-brand-700"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-brand-100 bg-white p-3">
+                <p className="text-xs text-muted">Danh gia</p>
+                <p className="font-display text-lg font-bold text-ink">Excellent</p>
+              </div>
+              <div className="rounded-2xl border border-brand-100 bg-white p-3">
+                <p className="text-xs text-muted">Nguoi ban</p>
+                <p className="font-display text-lg font-bold text-ink">Da xac minh</p>
+              </div>
+              <div className="rounded-2xl border border-brand-100 bg-white p-3">
+                <p className="text-xs text-muted">Thanh toan</p>
+                <p className="font-display text-lg font-bold text-ink">Bao mat</p>
+              </div>
+            </div>
           </div>
-          <h1 className="font-display text-3xl font-bold tracking-tight md:text-5xl leading-tight">
-            Tìm chiếc xe<br />
-            <span className="text-brand-200">phù hợp với bạn</span>
-          </h1>
-          <p className="mt-4 text-base text-white/75 max-w-lg">
-            Tất cả tin đăng đã qua kiểm duyệt — thông tin minh bạch, giao dịch an toàn.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link to="/register" className="btn bg-white text-brand-700 hover:bg-brand-50 shadow-lg">
-              Đăng ký bán xe
-            </Link>
-            <a href="#listings" className="btn bg-white/15 text-white border border-white/25 hover:bg-white/25 backdrop-blur-sm">
-              Xem ngay
-            </a>
+
+          <div className="rounded-3xl border border-brand-200 bg-white p-4 shadow-sm md:p-6">
+            <h2 className="font-display text-xl font-bold text-ink">Tim xe ngay</h2>
+            <p className="mt-1 text-sm text-muted">Nhap tu khoa va chon bo loc de xem ket qua phu hop.</p>
+            <div className="mt-4 space-y-3">
+              <input
+                className="input-base"
+                placeholder="Toyota, Mazda CX-5, sedan..."
+                value={filters.search}
+                onChange={(e) => setFilter('search', e.target.value)}
+              />
+              <select
+                className="input-base"
+                value={filters.make}
+                onChange={(e) => setFilter('make', e.target.value)}
+              >
+                <option value="">Chon hang xe</option>
+                {CAR_MAKES.slice(1).map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <button
+                type="button"
+                className="btn btn-primary w-full"
+                onClick={() => document.getElementById('listings')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                Xem xe dang ban
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Filter Bar ───────────────────────────────── */}
-      <section id="listings" className="card p-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-          {/* Search */}
-          <div className="lg:col-span-2 relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">🔍</span>
-            <input
-              className="input-base pl-9"
-              placeholder="Tìm theo tên, hãng, dòng xe..."
-              value={filters.search}
-              onChange={(e) => setFilter('search', e.target.value)}
-            />
-          </div>
-          {/* Make */}
-          <select
-            className="input-base"
-            value={filters.make}
-            onChange={(e) => setFilter('make', e.target.value)}
-          >
-            <option value="">Tất cả hãng</option>
-            {CAR_MAKES.slice(1).map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
-          {/* Fuel */}
-          <select
-            className="input-base"
-            value={filters.fuelType}
-            onChange={(e) => setFilter('fuelType', e.target.value)}
-          >
-            <option value="">Nhiên liệu</option>
-            {Object.entries(FUEL_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
-          {/* Transmission */}
-          <select
-            className="input-base"
-            value={filters.transmission}
-            onChange={(e) => setFilter('transmission', e.target.value)}
-          >
-            <option value="">Hộp số</option>
-            {Object.entries(TRANS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
-          {/* Min price */}
+      <section className="space-y-4">
+        <h2 className="font-display text-2xl font-bold text-ink">Thuong hieu duoc tim nhieu</h2>
+        <div className="flex flex-wrap gap-3">
+          {CAR_MAKES.slice(1).map((m) => (
+            <button
+              key={m}
+              className={`px-5 py-3 rounded-xl border font-semibold transition-all ${
+                filters.make === m 
+                  ? 'bg-brand-600 border-brand-600 text-white shadow-md' 
+                  : 'bg-white border-brand-100 text-ink hover:border-brand-300 hover:shadow-sm'
+              }`}
+              onClick={() => setFilter('make', filters.make === m ? '' : m)}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section id="listings" className="card space-y-4 p-4 md:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-display text-lg font-semibold text-ink">Bo loc nang cao</h3>
+          <p className="text-sm text-muted">{total} ket qua</p>
+        </div>
+        <div className="flex flex-wrap gap-3 items-center">
+        <select
+          className="input-base w-auto min-w-[140px] bg-white"
+          value={filters.fuelType}
+          onChange={(e) => setFilter('fuelType', e.target.value)}
+        >
+          <option value="">Nhien lieu</option>
+          {Object.entries(FUEL_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <select
+          className="input-base w-auto min-w-[140px] bg-white"
+          value={filters.transmission}
+          onChange={(e) => setFilter('transmission', e.target.value)}
+        >
+          <option value="">Hop so</option>
+          {Object.entries(TRANS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <div className="flex items-center gap-2">
           <input
             type="number"
-            className="input-base"
-            placeholder="Giá từ (triệu)"
-            value={filters.minPrice}
+            className="input-base w-32 bg-white"
+            placeholder="Gia tu (tr)"
+            value={filters.minPrice ? String(Number(filters.minPrice) / 1_000_000) : ''}
             onChange={(e) => setFilter('minPrice', e.target.value ? String(Number(e.target.value) * 1_000_000) : '')}
             min={0}
           />
-          {/* Max price */}
+          <span className="text-muted">-</span>
           <input
             type="number"
-            className="input-base"
-            placeholder="Đến (triệu)"
+            className="input-base w-32 bg-white"
+            placeholder="Gia den (tr)"
             value={filters.maxPrice ? String(Number(filters.maxPrice) / 1_000_000) : ''}
             onChange={(e) => setFilter('maxPrice', e.target.value ? String(Number(e.target.value) * 1_000_000) : '')}
             min={0}
           />
         </div>
-        {/* Active filter pills */}
-        {(filters.make || filters.fuelType || filters.search || filters.minPrice || filters.maxPrice) && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-muted">Đang lọc:</span>
-            {filters.make     && <span className="badge bg-brand-100 text-brand-800">{filters.make} ×</span>}
-            {filters.fuelType && <span className="badge bg-brand-100 text-brand-800">{FUEL_LABELS[filters.fuelType]} ×</span>}
-            {filters.transmission && <span className="badge bg-brand-100 text-brand-800">{TRANS_LABELS[filters.transmission]} ×</span>}
-            {filters.search       && <span className="badge bg-brand-100 text-brand-800">"{filters.search}" ×</span>}
+
+        {(filters.make || filters.fuelType || filters.search || filters.minPrice || filters.maxPrice || filters.transmission) && (
+          <div className="ml-auto flex items-center gap-2 text-xs">
             <button
-              className="text-muted underline hover:text-ink transition-colors ml-1"
+              className="text-brand-600 font-semibold hover:underline"
               onClick={() => { const reset: Filters = { make:'', fuelType:'', transmission:'', minPrice:'', maxPrice:'', search:'' }; setFilters(reset); fetchListings(reset); }}
             >
-              Xóa bộ lọc
+              Xoa tat ca
             </button>
           </div>
         )}
+        </div>
       </section>
 
-      {/* ── Error ────────────────────────────────────── */}
       {error && <PageError message={error} onRetry={() => void fetchListings(filters)} />}
 
-      {/* ── Grid ─────────────────────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-2xl font-bold text-ink">Xe dang duoc quan tam</h2>
+          <Link to="/" className="text-sm font-semibold text-brand-700 hover:underline">Xem tat ca</Link>
+        </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)
           : items.map((l) => <CarCard key={l.id} listing={l} />)
         }
       </div>
+      </section>
 
-      {/* ── Empty state ─────────────────────────────── */}
       {!loading && items.length === 0 && !error && (
         <PageEmpty
           icon="🚗"
-          title="Chưa có xe nào"
+          title="Chua tim thay xe phu hop"
           description={
             filters.make || filters.fuelType || filters.transmission || filters.search
-              ? 'Thử thay đổi bộ lọc để tìm xe phù hợp hơn.'
-              : 'Hãy đăng nhập với vai trò người bán để đăng tin, sau đó quản trị duyệt.'
+              ? 'Hay thay doi bo loc de tim ket qua phu hop hon.'
+              : 'Dang nhap vai tro nguoi ban de dang tin, sau do quan tri duyet.'
           }
           action={(
             filters.make || filters.fuelType || filters.transmission || filters.search
@@ -275,11 +321,29 @@ export function HomePage() {
               className="btn btn-secondary"
               onClick={() => { const reset: Filters = { make:'', fuelType:'', transmission:'', minPrice:'', maxPrice:'', search:'' }; setFilters(reset); fetchListings(reset); }}
             >
-              Xóa bộ lọc
+              Xoa bo loc
             </button>
           ) : undefined}
         />
       )}
+
+      <section className="grid gap-4 rounded-3xl border border-brand-100 bg-white p-5 md:grid-cols-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Buoc 1</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Tim xe va so sanh</h3>
+          <p className="mt-2 text-sm text-muted">Tra cuu nhanh theo hang xe, gia, hop so, nhien lieu va tinh trang goi dang tin.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Buoc 2</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Lien he nguoi ban</h3>
+          <p className="mt-2 text-sm text-muted">Thong tin listing minh bach, de dang lien lac va theo doi don thanh toan.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Buoc 3</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Chot giao dich an toan</h3>
+          <p className="mt-2 text-sm text-muted">He thong phan quyen va kiem duyet giup giam rui ro trong toan bo quy trinh.</p>
+        </div>
+      </section>
     </div>
   );
 }

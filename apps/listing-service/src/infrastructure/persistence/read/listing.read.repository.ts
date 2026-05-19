@@ -1,75 +1,82 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { LISTING_STORE } from '../listing.store.token';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import type { ListingRecord } from '../listing-record';
 import { ListingResponseDto } from '../../../presentation/dto/listing.response.dto';
 import type { ListingStatus, FuelType, TransmissionType } from '../../../domain/entities/listing.entity';
+import { ListingPackageType } from '../../../domain/entities/listing.entity';
+import { ListingOrmEntity } from '../typeorm/listing.orm.entity';
 
 @Injectable()
 export class ListingReadRepository {
   constructor(
-    @Inject(LISTING_STORE)
-    private readonly store: Map<string, ListingRecord>,
+    @InjectRepository(ListingOrmEntity)
+    private readonly repo: Repository<ListingOrmEntity>,
   ) {}
 
-  private toDto(r: ListingRecord): ListingResponseDto {
+  private toDto(r: ListingOrmEntity): ListingResponseDto {
     return {
       id: r.id,
       title: r.title,
       description: r.description,
-      priceVnd: r.priceVnd,
+      priceVnd: Number(r.priceVnd),
       sellerId: r.sellerId,
-      packageType: r.packageType,
+      packageType: r.packageType as ListingPackageType,
       imageUrls: r.imageUrls ?? [],
       carMake: r.carMake,
       carModel: r.carModel,
       carYear: r.carYear,
       mileageKm: r.mileageKm,
-      fuelType: r.fuelType,
-      transmission: r.transmission,
-      status: r.status,
-      createdAt: r.createdAt.toISOString(),
-      updatedAt: r.updatedAt.toISOString(),
+      fuelType: r.fuelType as FuelType,
+      transmission: r.transmission as TransmissionType,
+      status: r.status as ListingStatus,
+      createdAt: r.createdAt?.toISOString() ?? new Date().toISOString(),
+      updatedAt: r.updatedAt?.toISOString() ?? new Date().toISOString(),
       approvedAt: r.approvedAt?.toISOString(),
-      rejectionReason: r.rejectionReason,
-      shareCount: r.shareCount,
-      viewCount: r.viewCount,
-      favoriteCount: r.favoriteCount,
-      contactCount: r.contactCount,
+      rejectionReason: r.rejectionReason ?? undefined,
+      shareCount: r.shareCount ?? 0,
+      viewCount: r.viewCount ?? 0,
+      favoriteCount: r.favoriteCount ?? 0,
+      contactCount: r.contactCount ?? 0,
       pushedAt: r.pushedAt?.toISOString(),
-      isFeatured: r.isFeatured,
+      isFeatured: r.isFeatured ?? false,
       featuredUntil: r.featuredUntil?.toISOString(),
-      modificationRequestDetails: r.modificationRequestDetails,
-      modificationRequestedBy: r.modificationRequestedBy,
+      modificationRequestDetails: r.modificationRequestDetails ?? undefined,
+      modificationRequestedBy: r.modificationRequestedBy ?? undefined,
       modificationRequestedAt: r.modificationRequestedAt?.toISOString(),
       removedAt: r.removedAt?.toISOString(),
-      removedBy: r.removedBy,
-      adminRemovalReason: r.adminRemovalReason,
-      expiresAt: r.expiresAt.toISOString(),
-      isDeleted: r.isDeleted,
+      removedBy: r.removedBy ?? undefined,
+      adminRemovalReason: r.adminRemovalReason ?? undefined,
+      expiresAt: r.expiresAt?.toISOString() ?? new Date().toISOString(),
+      isDeleted: r.isDeleted ?? false,
     };
   }
 
   async findById(id: string): Promise<ListingResponseDto | null> {
-    const r = this.store.get(id);
+    const r = await this.repo.findOneBy({ id } as any);
     return r ? this.toDto(r) : null;
   }
 
   /** UC56 — tìm tin đang active (approved) nhưng đã quá hạn hiển thị */
   async findApprovedExpired(before: Date): Promise<ListingRecord[]> {
-    return [...this.store.values()].filter((row) => {
-      if (row.isDeleted) {
-        return false;
-      }
-      return row.status === 'approved' && row.expiresAt.getTime() < before.getTime();
-    });
+    const rows = await this.repo
+      .createQueryBuilder('l')
+      .where('l.isDeleted = false')
+      .andWhere('l.status = :status', { status: 'approved' })
+      .andWhere('l.expiresAt < :before', { before })
+      .getMany();
+    return rows as unknown as ListingRecord[];
   }
 
   // UC7 — Lấy nhiều xe theo mảng ID
   async findByIds(ids: string[]): Promise<ListingResponseDto[]> {
-    return ids
-      .map((id) => this.store.get(id))
-      .filter((r): r is ListingRecord => r !== undefined && r.status === 'approved')
-      .map((r) => this.toDto(r));
+    if (ids.length === 0) return [];
+    const rows = await this.repo
+      .createQueryBuilder('l')
+      .where('l.id IN (:...ids)', { ids })
+      .andWhere('l.status = :status', { status: 'approved' })
+      .getMany();
+    return rows.map((r) => this.toDto(r));
   }
 
   // UC20 — Thống kê tổng hợp tin đăng
@@ -79,7 +86,7 @@ export class ListingReadRepository {
     byPackage: Record<string, number>;
     byMake: Record<string, number>;
   }> {
-    const all = [...this.store.values()];
+    const all = await this.repo.find();
     const total = all.length;
 
     const byStatus: Record<string, number> = {};
@@ -97,29 +104,67 @@ export class ListingReadRepository {
 
   /** UC17 — trả về raw records để listing-image.service lọc manual review */
   async findAllRecords(): Promise<ListingRecord[]> {
-    return [...this.store.values()];
+    const rows = await this.repo.find();
+    return rows as unknown as ListingRecord[];
   }
 
   async findMany(
     page: number,
     limit: number,
-    // status?: string,
     status: ListingStatus | string,
     sortBy: string = 'createdAt',
     sortOrder: 'asc' | 'desc' = 'desc',
+    search?: string,
+    make?: string,
+    fuelType?: string,
+    transmission?: string,
+    minPrice?: number,
+    maxPrice?: number,
   ): Promise<{
     items: ListingResponseDto[];
     total: number;
     page: number;
     limit: number;
   }> {
-    let rows = [...this.store.values()];
-    // if (status) {
-    //   rows = rows.filter((x) => x.status === status);
-    // }
-    // Lọc theo status (chỉ lấy tin chưa bị xóa nếu có trường isDeleted)
-    rows = rows.filter((x) => x.status === status);
-    // Nếu có trường isDeleted trong ListingRecord, thêm: .filter(x => !x.isDeleted)
+    let rows = await this.repo.find({
+      where: { status: status as string },
+    });
+    
+    // Lọc theo search (keyword)
+    if (search) {
+      const lowerKeyword = search.toLowerCase();
+      rows = rows.filter((x) =>
+        x.title.toLowerCase().includes(lowerKeyword) ||
+        x.carMake.toLowerCase().includes(lowerKeyword) ||
+        x.carModel.toLowerCase().includes(lowerKeyword)
+      );
+    }
+    
+    // Lọc theo make
+    if (make) {
+      const lowerMake = make.toLowerCase();
+      rows = rows.filter((x) => x.carMake?.toLowerCase() === lowerMake);
+    }
+    
+    // Lọc theo fuelType
+    if (fuelType) {
+      rows = rows.filter((x) => x.fuelType === fuelType);
+    }
+    
+    // Lọc theo transmission
+    if (transmission) {
+      rows = rows.filter((x) => x.transmission === transmission);
+    }
+    
+    // Lọc theo minPrice
+    if (minPrice !== undefined && !isNaN(minPrice)) {
+      rows = rows.filter((x) => Number(x.priceVnd) >= minPrice);
+    }
+    
+    // Lọc theo maxPrice
+    if (maxPrice !== undefined && !isNaN(maxPrice)) {
+      rows = rows.filter((x) => Number(x.priceVnd) <= maxPrice);
+    }
 
     // Sắp xếp
     rows.sort((a, b) => {
@@ -128,8 +173,8 @@ export class ListingReadRepository {
 
       // Type guards hoặc kiểm tra sự tồn tại của thuộc tính
       if (sortBy === 'priceVnd') {
-        aValue = a.priceVnd;
-        bValue = b.priceVnd;
+        aValue = Number(a.priceVnd);
+        bValue = Number(b.priceVnd);
       } else if (sortBy === 'carYear') {
         aValue = a.carYear;
         bValue = b.carYear;
@@ -148,10 +193,7 @@ export class ListingReadRepository {
     });
     const total = rows.length;
     const start = (page - 1) * limit;
-    const items = rows
-      //.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(start, start + limit)
-      .map((r) => this.toDto(r));
+    const items = rows.slice(start, start + limit).map((r) => this.toDto(r));
     return { items, total, page, limit };
   }
 
@@ -165,9 +207,9 @@ export class ListingReadRepository {
     page: number;
     limit: number;
   }> {
-    const rows = [...this.store.values()].filter(
-      (x) => x.sellerId === sellerId && x.status === 'approved',
-    );
+    const rows = await this.repo.find({
+      where: { sellerId, status: 'approved' },
+    });
     const total = rows.length;
     const start = (page - 1) * limit;
     const items = rows
@@ -191,12 +233,12 @@ export class ListingReadRepository {
     limit: number;
   }> {
     const lowerCaseKeyword = keyword.toLowerCase();
-    let rows = [...this.store.values()];
+    let rows = await this.repo.find();
 
     // Lọc theo keyword trong title, carMake, carModel (mock logic)
     rows = rows.filter(
       (x) =>
-        x.status === 'approved' && // Chỉ tìm kiếm trong các tin đã duyệt
+        x.status === 'approved' &&
         (x.title.toLowerCase().includes(lowerCaseKeyword) ||
           x.carMake.toLowerCase().includes(lowerCaseKeyword) ||
           x.carModel.toLowerCase().includes(lowerCaseKeyword)),
@@ -208,8 +250,8 @@ export class ListingReadRepository {
       let bValue: any;
 
       if (sortBy === 'priceVnd') {
-        aValue = a.priceVnd;
-        bValue = b.priceVnd;
+        aValue = Number(a.priceVnd);
+        bValue = Number(b.priceVnd);
       } else if (sortBy === 'carYear') {
         aValue = a.carYear;
         bValue = b.carYear;
@@ -255,14 +297,14 @@ export class ListingReadRepository {
     page: number;
     limit: number;
   }> {
-    let rows = [...this.store.values()];
+    let rows = await this.repo.find();
 
     // Lọc theo tất cả các tiêu chí (mock logic)
     rows = rows.filter(
       (x) =>
-        x.status === 'approved' && // Chỉ lọc trong các tin đã duyệt
-        x.priceVnd >= minPrice &&
-        x.priceVnd <= maxPrice &&
+        x.status === 'approved' &&
+        Number(x.priceVnd) >= minPrice &&
+        Number(x.priceVnd) <= maxPrice &&
         x.carYear >= minYear &&
         x.carYear <= maxYear &&
         (!carMake || x.carMake.toLowerCase().includes(carMake.toLowerCase())) &&

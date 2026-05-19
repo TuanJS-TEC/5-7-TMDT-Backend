@@ -1,23 +1,22 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { FAVORITE_STORE } from '../listing.store.token';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { FavoriteOrmEntity } from '../typeorm/favorite.orm.entity';
 
 @Injectable()
 export class FavoriteWriteRepository {
   constructor(
-    @Inject(FAVORITE_STORE)
-    private readonly store: Map<string, Set<string>>,
+    @InjectRepository(FavoriteOrmEntity)
+    private readonly repo: Repository<FavoriteOrmEntity>,
   ) {}
 
   async addFavorite(userId: string, listingId: string): Promise<void> {
-    if (!this.store.has(userId)) {
-      this.store.set(userId, new Set<string>());
-    }
-    this.store.get(userId)!.add(listingId);
+    const existing = await this.repo.findOne({ where: { userId, listingId } });
+    if (existing) return;
+    await this.repo.save(this.repo.create({ userId, listingId }));
   }
 
   async removeFavorite(userId: string, listingId: string): Promise<void> {
-    if (this.store.has(userId)) {
-      this.store.get(userId)!.delete(listingId);
-    }
+    await this.repo.delete({ userId, listingId });
   }
 }
