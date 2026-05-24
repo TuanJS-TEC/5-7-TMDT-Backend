@@ -23,7 +23,7 @@ export class CreateListingHandler
       priceVnd: command.priceVnd,
       sellerId: command.sellerId,
       packageType: command.packageType,
-      imageUrls: command.imageUrls,
+      imageUrls: command.imageUrls ?? [],
       carMake: command.carMake,
       carModel: command.carModel,
       carYear: command.carYear,

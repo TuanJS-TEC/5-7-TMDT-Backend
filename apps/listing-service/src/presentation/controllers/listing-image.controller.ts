@@ -8,8 +8,10 @@ import {
   Post,
   Req,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { JwtAuthGuard, SellerGuard, JwtRequestUser } from '@car-marketplace/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { Request } from 'express';
@@ -23,6 +25,7 @@ export class ListingImageController {
 
   /** UC17 — link upload (multipart) cho người bán */
   @Get(':id/images/upload-instructions')
+  @UseGuards(JwtAuthGuard, SellerGuard)
   getUploadInstructions(
     @Param('id', ParseUUIDPipe) listingId: string,
     @Req() req: Request,
@@ -35,6 +38,7 @@ export class ListingImageController {
 
   /** UC17 — upload ảnh + gọi AI */
   @Post(':id/images')
+  @UseGuards(JwtAuthGuard, SellerGuard)
   @HttpCode(200)
   @UseInterceptors(
     FileInterceptor('file', {
@@ -44,12 +48,13 @@ export class ListingImageController {
   )
   async upload(
     @Param('id', ParseUUIDPipe) listingId: string,
-    @Body() body: UploadListingImageBodyDto,
+    @Req() req: { user: JwtRequestUser },
+    @Body() _body: UploadListingImageBodyDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.listingImage.uploadAndValidate(
       listingId,
-      body.sellerId,
+      req.user.userId,
       file as Express.Multer.File,
     );
   }

@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,7 +23,12 @@ export class ListingImageService {
     private readonly readRepo: ListingReadRepository,
     private readonly aiClient: AiImageValidationClient,
     private readonly publisher: RabbitMqPublisher,
+    private readonly config: ConfigService,
   ) {}
+
+  private skipAiValidation(): boolean {
+    return this.config.get<string>('SKIP_AI_IMAGE_VALIDATION', 'true') === 'true';
+  }
 
   /** UC17 — link & field để client upload (multipart) */
   getUploadInstructions(listingId: string, publicBaseUrl: string) {
@@ -84,7 +90,9 @@ export class ListingImageService {
       .jpeg({ quality: 88 })
       .toBuffer();
 
-    const ai = await this.aiClient.validateImage(jpegBuffer, 'image/jpeg');
+    const ai = this.skipAiValidation()
+      ? { valid: true as const }
+      : await this.aiClient.validateImage(jpegBuffer, 'image/jpeg');
 
     if (ai.valid) {
       const rel = await this.persistApprovedImage(listingId, jpegBuffer);

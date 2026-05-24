@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { AppIcon, PRICE_ICON } from './icons';
 
 function roleLabel(role: string) {
   if (role === 'admin')  return 'Quản trị';
@@ -80,8 +81,8 @@ export function Shell() {
 
           {/* Logo */}
           <Link to="/" className="group flex items-center gap-2.5 shrink-0" onClick={() => setMobileOpen(false)}>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 font-display text-lg font-bold text-white shadow-md shadow-brand-500/30 transition-transform group-hover:scale-105">
-              C
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-md shadow-brand-500/30 transition-transform group-hover:scale-105">
+              <AppIcon name="racing" size="sm" alt="Car Marketplace" className="brightness-0 invert" />
             </span>
             <div className="hidden sm:block leading-tight">
               <span className="font-display text-[1.05rem] font-bold tracking-tight text-brand-900">Car Marketplace</span>
@@ -97,7 +98,12 @@ export function Shell() {
                 <NavLink to="/favorites" className={({ isActive }) => navLinkClass(isActive)}>Saved</NavLink>
                 {user.role === 'seller' && (
                   <>
-                    <NavLink to="/seller/orders"      className={({ isActive }) => navLinkClass(isActive)}>Payments</NavLink>
+                    <NavLink to="/seller/listings"    className={({ isActive }) => navLinkClass(isActive)}>Tin của tôi</NavLink>
+                    <NavLink to="/seller/orders"      className={({ isActive }) => navLinkClass(isActive)}>
+                      <span className="inline-flex items-center gap-1.5">
+                        <AppIcon name={PRICE_ICON} size="xs" alt="" /> Payments
+                      </span>
+                    </NavLink>
                     <NavLink to="/seller/listing/new" className={({ isActive }) => navLinkClass(isActive)}>Sell my car</NavLink>
                   </>
                 )}
@@ -105,6 +111,7 @@ export function Shell() {
                   <>
                     <NavLink to="/admin/dashboard" className={({ isActive }) => navLinkClass(isActive, true)}>Revenue</NavLink>
                     <NavLink to="/admin/moderation" className={({ isActive }) => navLinkClass(isActive, true)}>Moderation</NavLink>
+                    <NavLink to="/admin/sold" className={({ isActive }) => navLinkClass(isActive, true)}>Đã bán</NavLink>
                   </>
                 )}
               </>
@@ -159,7 +166,12 @@ export function Shell() {
                   <NavLink to="/favorites"          className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>Saved</NavLink>
                   {user.role === 'seller' && (
                     <>
-                      <NavLink to="/seller/orders"      className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>Payments</NavLink>
+                      <NavLink to="/seller/listings"    className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>Tin của tôi</NavLink>
+                      <NavLink to="/seller/orders"      className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>
+                        <span className="inline-flex items-center gap-1.5">
+                          <AppIcon name={PRICE_ICON} size="xs" alt="" /> Payments
+                        </span>
+                      </NavLink>
                       <NavLink to="/seller/listing/new" className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>Sell my car</NavLink>
                     </>
                   )}
@@ -167,6 +179,7 @@ export function Shell() {
                     <>
                       <NavLink to="/admin/dashboard" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Revenue</NavLink>
                       <NavLink to="/admin/moderation" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Moderation</NavLink>
+                      <NavLink to="/admin/sold" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Đã bán</NavLink>
                     </>
                   )}
                   <NavLink to="/profile" className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>My account</NavLink>

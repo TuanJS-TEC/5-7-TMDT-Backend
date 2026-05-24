@@ -60,9 +60,9 @@ import { Uc38RemovalAuditReadRepository } from './infrastructure/persistence/rea
 import { Uc38RemovalAuditWriteRepository } from './infrastructure/persistence/write/uc38-removal-audit.write.repository';
 import { MarkListingSoldCommand } from './application/commands/mark-listing-sold/mark-listing-sold.command';
 import { MarkListingSoldHandler } from './application/commands/mark-listing-sold/mark-listing-sold.handler';
-import { ListingSoldEvent } from './application/events/listing-sold/listing-sold.event';
-import { ListingDeletedEvent } from './application/events/listing-deleted/listing-deleted.event';
-// import { ListingSoldEventHandler } from './application/events/listing-sold/listing-sold.handler';
+import { ListingSoldEventHandler } from './application/events/listing-sold/listing-sold.handler';
+import { GetMyListingsHandler } from './application/queries/get-my-listings/get-my-listings.handler';
+import { GetAdminSoldListingsHandler } from './application/queries/get-admin-sold-listings/get-admin-sold-listings.handler';
 import { RenewListingCommand } from './application/commands/renew-listing/renew-listing.command';
 import { RenewListingHandler } from './application/commands/renew-listing/renew-listing.handler';
 import { RenewListingDto } from './presentation/dto/renew-listing.dto';
@@ -71,6 +71,10 @@ import { PaymentServiceHttpClient } from './infrastructure/payment/payment-servi
 import { ListingExpirationService } from './application/services/listing-expiration.service';
 import { ListingExpirationNotificationService } from './application/services/listing-expiration-notification.service';
 import { ListingExpirationCron } from './infrastructure/scheduling/listing-expiration.cron';
+import { ListingAuthModule } from './auth/listing-auth.module';
+import { ListingImageController } from './presentation/controllers/listing-image.controller';
+import { ListingImageService } from './application/listing-image/listing-image.service';
+import { AiImageValidationClient } from './infrastructure/ai/ai-image-validation.client';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -104,6 +108,8 @@ const queryHandlers = [
   GetListingStatsHandler,
   /** UC20 — Xem thống kê tin đăng */
   GetListingStatisticsHandler,
+  GetMyListingsHandler,
+  GetAdminSoldListingsHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,
@@ -112,10 +118,8 @@ const eventHandlers = [
   ListingRejectedHandler,
   /** UC33 — publish listing.modification_requested event → notification-service */
   ListingModificationRequestedHandler,
-  ListingSoldEvent,
-  ListingDeletedEvent,
-  ListingRenewedEvent,
-  // ListingSoldEventHandler,
+  /** UC25 — publish listing.sold → notification-service */
+  ListingSoldEventHandler,
 ];
 
 const typeOrmListing =
@@ -127,11 +131,12 @@ const typeOrmListing =
   // imports: [CqrsModule, ...typeOrmListing],
   imports: [
     CqrsModule,
+    ListingAuthModule,
     ConfigModule, // Cần ConfigModule để ProfileService đọc biến môi trường
     HttpModule, // Cần HttpModule để ProfileService có thể gọi HTTP request
     ...typeOrmListing,
   ],
-  controllers: [ListingController],
+  controllers: [ListingController, ListingImageController],
   providers: [
     {
       provide: SELLER_WARNING_STORE,
@@ -166,6 +171,8 @@ const typeOrmListing =
     ListingExpirationService,
     ListingExpirationNotificationService,
     ListingExpirationCron,
+    ListingImageService,
+    AiImageValidationClient,
     ...commandHandlers,
     ...queryHandlers,
     ...eventHandlers,

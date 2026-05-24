@@ -54,19 +54,6 @@ export class AppModule implements NestModule { // Thực hiện NestModule
         },
       );
 
-    // Proxy static listing images: /uploads/listings/... -> listing-service
-    consumer
-      .apply(
-        createProxyMiddleware({
-          target: listingServiceUrl,
-          changeOrigin: true,
-        }),
-      )
-      .forRoutes({
-        path: 'uploads/listings/*path',
-        method: RequestMethod.ALL,
-      });
-
     // Thêm proxy cho Auth Service (cần cho UC4 để lấy thông tin người bán)
     const authServiceUrl =
       this.configService.get<string>('AUTH_SERVICE_URL') ??
@@ -94,19 +81,6 @@ export class AppModule implements NestModule { // Thực hiện NestModule
           version: '1',
         },
       );
-
-    // Proxy static avatar images: /uploads/avatars/... -> auth-service
-    consumer
-      .apply(
-        createProxyMiddleware({
-          target: authServiceUrl,
-          changeOrigin: true,
-        }),
-      )
-      .forRoutes({
-        path: 'uploads/avatars/*path',
-        method: RequestMethod.ALL,
-      });
 
     const paymentServiceUrl =
       this.configService.get<string>('PAYMENT_SERVICE_URL') ??

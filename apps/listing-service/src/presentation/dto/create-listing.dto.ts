@@ -30,8 +30,10 @@ export class CreateListingDto {
   @Min(0)
   priceVnd!: number;
 
+  /** Dev — ưu tiên JWT; field này optional để tương thích client cũ. */
+  @IsOptional()
   @IsUUID()
-  sellerId!: string;
+  sellerId?: string;
 
   /** UC16 bước 3 — gói tin: basic | premium | vip */
   // @IsEnum(['basic', 'premium', 'vip'])
@@ -43,11 +45,13 @@ export class CreateListingDto {
    * UC16 bước 5 — danh sách URL ảnh xe (tối thiểu 1, tối đa 20).
    * Client tự upload ảnh lên CDN trước rồi gửi URL vào đây.
    */
+  /** Có thể để trống — upload ảnh qua POST /listings/:id/images sau khi tạo tin. */
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
+  @ArrayMinSize(0)
   @ArrayMaxSize(20)
   @IsUrl({}, { each: true })
-  imageUrls!: string[];
+  imageUrls?: string[];
 
   /** Hãng xe, ví dụ: Toyota, Honda, Ford */
   @IsString()

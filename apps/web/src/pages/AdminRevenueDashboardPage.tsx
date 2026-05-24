@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, ApiError } from '../api/client';
 import { Spinner } from '../components/ui/Spinner';
 import { PageError } from '../components/ui/PageState';
+import { AppIcon, PRICE_ICON } from '../components/icons';
 
 interface RecentTransaction {
   id: string;
@@ -38,10 +39,12 @@ function currency(value: number): string {
 export function AdminRevenueDashboardPage() {
   const [data, setData] = useState<RevenueDashboardDto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
-    setLoading(true);
+  async function load(refreshOnly = false) {
+    if (refreshOnly) setRefreshing(true);
+    else setLoading(true);
     setError(null);
     try {
       const res = await api<RevenueDashboardDto>('/admin/revenue/dashboard');
@@ -50,6 +53,7 @@ export function AdminRevenueDashboardPage() {
       setError(e instanceof ApiError ? e.message : 'Không tải được dashboard doanh thu');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
@@ -71,9 +75,21 @@ export function AdminRevenueDashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-amber-950">📈 Dashboard doanh thu</h1>
-        <p className="mt-1 text-sm text-muted">Use case 40 - Tổng quan doanh thu hệ thống.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-amber-950 inline-flex items-center gap-2">
+            <AppIcon name="dashboard" size="md" alt="" /> Dashboard doanh thu
+          </h1>
+          <p className="mt-1 text-sm text-muted">Use case 40 — Tổng quan doanh thu từ gói tin đã thanh toán.</p>
+        </div>
+        <button
+          type="button"
+          className="btn-secondary text-sm"
+          disabled={refreshing}
+          onClick={() => void load(true)}
+        >
+          {refreshing ? 'Đang tải…' : 'Làm mới'}
+        </button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -99,7 +115,9 @@ export function AdminRevenueDashboardPage() {
 
       <div className="grid gap-4 xl:grid-cols-2">
         <div className="card p-4">
-          <h2 className="text-base font-semibold text-ink">Doanh thu theo gói</h2>
+          <h2 className="inline-flex items-center gap-2 text-base font-semibold text-ink">
+            <AppIcon name={PRICE_ICON} size="sm" alt="" /> Doanh thu theo gói
+          </h2>
           <div className="mt-3 space-y-2 text-sm">
             <div className="flex items-center justify-between"><span>VIP</span><strong>{currency(data.byPackage.vip)}</strong></div>
             <div className="flex items-center justify-between"><span>Premium</span><strong>{currency(data.byPackage.premium)}</strong></div>

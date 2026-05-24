@@ -8,8 +8,10 @@ import {
 } from 'class-validator';
 
 export class UpdateListingDto {
+  /** Dev — ưu tiên JWT; optional cho tương thích. */
+  @IsOptional()
   @IsUUID()
-  sellerId!: string;
+  sellerId?: string;
 
   @IsOptional()
   @IsString()

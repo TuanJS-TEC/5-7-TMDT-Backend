@@ -12,6 +12,8 @@ import { SellerOrdersPage } from './pages/SellerOrdersPage';
 import { CreateListingPage } from './pages/CreateListingPage';
 import { AdminModerationPage } from './pages/AdminModerationPage';
 import { AdminRevenueDashboardPage } from './pages/AdminRevenueDashboardPage';
+import { AdminSoldListingsPage } from './pages/AdminSoldListingsPage';
+import { SellerMyListingsPage } from './pages/SellerMyListingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { UserProfilePage } from './pages/UserProfilePage';
 
@@ -35,6 +37,11 @@ export function App() {
               <FavoritesPage />
             </RequireAuth>
           } />
+          <Route path="seller/listings" element={
+            <RequireAuth roles={['seller']}>
+              <SellerMyListingsPage />
+            </RequireAuth>
+          } />
           <Route path="seller/orders" element={
             <RequireAuth roles={['seller']}>
               <SellerOrdersPage />
@@ -48,6 +55,11 @@ export function App() {
           <Route path="admin/moderation" element={
             <RequireAuth roles={['admin']}>
               <AdminModerationPage />
+            </RequireAuth>
+          } />
+          <Route path="admin/sold" element={
+            <RequireAuth roles={['admin']}>
+              <AdminSoldListingsPage />
             </RequireAuth>
           } />
           <Route path="admin/dashboard" element={

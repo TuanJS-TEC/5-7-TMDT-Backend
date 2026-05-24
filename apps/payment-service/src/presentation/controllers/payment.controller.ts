@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   Post,
@@ -8,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ConfigService } from '@nestjs/config';
 import { GetPaymentMethodsQuery } from '../../application/queries/get-payment-methods/get-payment-methods.query';
 import { CreatePaymentOrderCommand } from '../../application/commands/create-payment-order/create-payment-order.command';
 import { CreatePaymentOrderDto } from '../dto/create-payment-order.dto';
@@ -18,12 +20,19 @@ import { GetPaymentOrderQuery } from '../../application/queries/get-payment-orde
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { SellerGuard } from '../../auth/seller.guard';
 import type { JwtRequestUser } from '../../auth/jwt-payload.types';
+import { VietQrWebhookService } from '../../infrastructure/vietqr/vietqr-webhook.service';
+import { VietQrService } from '../../infrastructure/vietqr/vietqr.service';
+import { PaymentReadRepository } from '../../infrastructure/persistence/read/payment.read.repository';
 
 @Controller('payments')
 export class PaymentController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly config: ConfigService,
+    private readonly vietQr: VietQrService,
+    private readonly vietQrWebhook: VietQrWebhookService,
+    private readonly paymentRead: PaymentReadRepository,
   ) {}
 
   /**
@@ -124,6 +133,30 @@ export class PaymentController {
       message:
         'Đã tạo phiên thanh toán ví. Mở payUrl hoặc hiển thị QR chứa qrPayload.',
     };
+  }
+
+  /**
+   * POST /api/v1/payments/orders/:orderId/simulate-success
+   * UC28 (dev) — mô phỏng webhook VietQR thành công (PAYMENT_DEMO_MODE=true).
+   */
+  @Post('orders/:orderId/simulate-success')
+  @UseGuards(JwtAuthGuard, SellerGuard)
+  async simulateVietQrSuccess(
+    @Req() req: { user: JwtRequestUser },
+    @Param('orderId') orderId: string,
+  ) {
+    if (this.config.get<string>('PAYMENT_DEMO_MODE', 'true') !== 'true') {
+      throw new ForbiddenException({
+        code: 'DEMO_MODE_DISABLED',
+        message: 'Mô phỏng thanh toán chỉ dùng trong môi trường dev.',
+      });
+    }
+    const order = await this.paymentRead.findById(orderId);
+    if (!order || order.userId !== req.user.userId) {
+      throw new ForbiddenException('Không có quyền trên đơn này.');
+    }
+    const result = await this.vietQrWebhook.processSandboxSuccess(orderId);
+    return { success: result.handled, ...result };
   }
 
   @Post('orders/:orderId/vietqr')

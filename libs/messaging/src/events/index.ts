@@ -1,4 +1,5 @@
 export * from './payment-payloads';
+export * from './listing-payloads';
 
 /** Integration event names for RabbitMQ routing */
 export const LISTING_EVENTS = {
@@ -6,6 +7,8 @@ export const LISTING_EVENTS = {
   APPROVED: 'listing.approved',
   /** UC16 A1 — admin từ chối / huỷ bài đăng */
   REJECTED: 'listing.rejected',
+  /** UC25 — showroom đánh dấu tin đã bán */
+  SOLD: 'listing.sold',
   DELETED: 'listing.deleted',
   /** UC17 — ảnh đạt qua AI */
   IMAGE_VALIDATED: 'listing.image.validated',

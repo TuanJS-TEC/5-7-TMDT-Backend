@@ -6,6 +6,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import { FormField } from '../components/ui/FormField';
 import { PageError } from '../components/ui/PageState';
+import { AppIcon, type AppIconName } from '../components/icons';
 
 const STEPS = ['Thông tin', 'Xác thực OTP'];
 
@@ -23,7 +24,7 @@ function StepIndicator({ current }: { current: number }) {
                 active ? 'bg-brand-600 border-brand-600 text-white scale-110 shadow-lg shadow-brand-500/25' :
                          'border-brand-200 text-muted bg-white'
               }`}>
-                {done ? '✓' : idx + 1}
+                {done ? <AppIcon name="priority" size="sm" alt="" className="brightness-0 invert" /> : idx + 1}
               </div>
               <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-brand-700' : done ? 'text-emerald-600' : 'text-muted'}`}>
                 {label}
@@ -154,7 +155,7 @@ export function RegisterPage() {
                     aria-invalid={touched.password && !passwordValid}
                   />
                   <button type="button" tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink" onClick={() => setShowPwd(v => !v)}>
-                    {showPwd ? '🙈' : '👁'}
+                    <span className="text-xs font-semibold">{showPwd ? 'Ẩn' : 'Hiện'}</span>
                   </button>
                 </div>
               </FormField>
@@ -164,8 +165,8 @@ export function RegisterPage() {
                 <label className="block text-sm font-semibold text-ink mb-2">Loại tài khoản</label>
                 <div className="grid grid-cols-2 gap-3">
                   {([
-                    { value: 'personal', icon: '👤', title: 'Cá nhân', sub: 'Mua xe → Vai trò người mua' },
-                    { value: 'showroom', icon: '🏢', title: 'Showroom', sub: 'Bán xe → Vai trò người bán' },
+                    { value: 'personal', icon: 'layers' as AppIconName, title: 'Cá nhân', sub: 'Mua xe → Vai trò người mua' },
+                    { value: 'showroom', icon: 'carDealer' as AppIconName, title: 'Showroom', sub: 'Bán xe → Vai trò người bán' },
                   ] as const).map((opt) => (
                     <button
                       key={opt.value}
@@ -177,7 +178,7 @@ export function RegisterPage() {
                           : 'border-brand-100 hover:border-brand-300'
                       }`}
                     >
-                      <span className="text-2xl">{opt.icon}</span>
+                      <AppIcon name={opt.icon} size="lg" alt="" />
                       <span className="font-semibold text-sm text-ink">{opt.title}</span>
                       <span className="text-xs text-muted leading-tight">{opt.sub}</span>
                     </button>
@@ -196,7 +197,10 @@ export function RegisterPage() {
             <form onSubmit={verify} className="space-y-5 animate-slide-up" noValidate>
               {info && (
                 <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
-                  📱 {info}
+                  <span className="inline-flex items-start gap-2">
+                    <AppIcon name="priority" size="sm" alt="" className="mt-0.5 shrink-0" />
+                    {info}
+                  </span>
                 </div>
               )}
               {error && <PageError message={error} />}
@@ -229,7 +233,14 @@ export function RegisterPage() {
               </FormField>
 
               <button type="submit" disabled={loading || !otpValid} className="btn btn-primary w-full py-3 text-base">
-                {loading ? <><Spinner size="sm" className="text-white" /> Đang xác thực…</> : '✓ Hoàn tất đăng ký'}
+                {loading ? (
+                  <><Spinner size="sm" className="text-white" /> Đang xác thực…</>
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    <AppIcon name="priority" size="sm" alt="" className="brightness-0 invert" />
+                    Hoàn tất đăng ký
+                  </span>
+                )}
               </button>
 
               <button

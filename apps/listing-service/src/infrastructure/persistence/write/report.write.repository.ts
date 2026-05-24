@@ -25,13 +25,13 @@ export class ReportWriteRepository {
       return;
     }
 
-    const updated: Partial<ReportOrmEntity> = {
+    const updated = {
       ...existing,
       ...patch,
       processedAt: patch.processedAt
         ? new Date(patch.processedAt)
         : existing.processedAt,
-    };
-    await this.repo.save(updated as ReportOrmEntity);
+    } as ReportOrmEntity;
+    await this.repo.save(updated);
   }
 }

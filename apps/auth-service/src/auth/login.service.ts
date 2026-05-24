@@ -72,7 +72,16 @@ export class LoginService {
       });
     }
 
-    const match = await bcrypt.compare(dto.password, user.passwordHash);
+    const hash = user.passwordHash?.trim() ?? '';
+    if (!hash.startsWith('$2')) {
+      throw new UnauthorizedException({
+        code: 'INVALID_ACCOUNT',
+        message:
+          'Tài khoản chưa được thiết lập mật khẩu hợp lệ. Vui lòng đăng ký lại hoặc liên hệ quản trị.',
+      });
+    }
+
+    const match = await bcrypt.compare(dto.password, hash);
     if (!match) {
       await this.handleWrongPassword(user);
     }

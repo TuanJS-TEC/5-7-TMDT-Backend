@@ -1,20 +1,39 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
+import { uploadListingImage } from '../api/uploadListingImage';
 import { useAuth } from '../context/AuthContext';
 import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import { PageError } from '../components/ui/PageState';
-
-const DEMO_IMG = (i: number) => `https://picsum.photos/seed/car${i}/800/600`;
+import {
+  ListingImageUploader,
+  type LocalListingImage,
+} from '../components/ListingImageUploader';
+import { AppIcon, PACKAGE_ICON, PRICE_ICON, type AppIconName } from '../components/icons';
 
 const STEPS = ['Thông tin xe', 'Mô tả & Ảnh', 'Gói tin'];
 
-const PACKAGES = [
-  { type: 'basic',   icon: '📄', name: 'Cơ bản',     price: 'Miễn phí', days: 7,  features: ['Hiển thị 7 ngày', 'Lên đến 5 ảnh', 'Vị trí thường'] },
-  { type: 'premium', icon: '💎', name: 'Nổi bật',    price: '199.000 ₫', days: 30, features: ['Hiển thị 30 ngày', 'Lên đến 15 ảnh', 'Badge Nổi bật', 'Ưu tiên tìm kiếm'], recommended: true },
-  { type: 'vip',     icon: '⭐', name: 'VIP',         price: '499.000 ₫', days: 60, features: ['Hiển thị 60 ngày', 'Ảnh không giới hạn', 'Badge VIP vàng', 'Top kết quả', 'Hỗ trợ ưu tiên'] },
+const PACKAGES: {
+  type: string;
+  icon: AppIconName;
+  name: string;
+  price: string;
+  days: number;
+  features: string[];
+  maxImages: number;
+  recommended?: boolean;
+}[] = [
+  { type: 'basic', icon: PACKAGE_ICON.basic, name: 'Cơ bản', price: 'Miễn phí', days: 7, features: ['Hiển thị 7 ngày', 'Lên đến 5 ảnh', 'Vị trí thường'], maxImages: 5 },
+  { type: 'premium', icon: PACKAGE_ICON.premium, name: 'Nổi bật', price: '199.000 ₫', days: 30, features: ['Hiển thị 30 ngày', 'Lên đến 15 ảnh', 'Badge Nổi bật', 'Ưu tiên tìm kiếm'], recommended: true, maxImages: 15 },
+  { type: 'vip', icon: PACKAGE_ICON.vip, name: 'VIP', price: '499.000 ₫', days: 60, features: ['Hiển thị 60 ngày', 'Ảnh không giới hạn', 'Badge VIP vàng', 'Top kết quả', 'Hỗ trợ ưu tiên'], maxImages: 20 },
 ];
+
+const MAX_BY_PACKAGE: Record<string, number> = {
+  basic: 5,
+  premium: 15,
+  vip: 20,
+};
 
 function StepIndicator({ current }: { current: number }) {
   return (
@@ -24,8 +43,8 @@ function StepIndicator({ current }: { current: number }) {
         return (
           <div key={label} className="flex items-center gap-0 flex-1">
             <div className="flex flex-col items-center gap-1.5">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-all ${done ? 'bg-emerald-500 border-emerald-500 text-white' : active ? 'bg-brand-600 border-brand-600 text-white shadow-lg shadow-brand-500/30' : 'border-brand-200 text-muted'}`}>
-                {done ? '✓' : idx + 1}
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-all ${done ? 'bg-emerald-500 border-emerald-500' : active ? 'bg-brand-600 border-brand-600 text-white shadow-lg shadow-brand-500/30' : 'border-brand-200 text-muted'}`}>
+                {done ? <AppIcon name="priority" size="sm" alt="" className="brightness-0 invert" /> : idx + 1}
               </div>
               <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-brand-700' : done ? 'text-emerald-600' : 'text-muted'}`}>{label}</span>
             </div>
@@ -42,7 +61,6 @@ export function CreateListingPage() {
   const { toast } = useToast();
   const [step, setStep] = useState<0 | 1 | 2>(0);
 
-  // Step 0 fields
   const [carMake,       setCarMake]       = useState('Toyota');
   const [carModel,      setCarModel]      = useState('Camry');
   const [carYear,       setCarYear]       = useState(2020);
@@ -51,31 +69,70 @@ export function CreateListingPage() {
   const [transmission,  setTransmission]  = useState<'automatic'|'manual'|'semi-automatic'>('automatic');
   const [priceVnd,      setPriceVnd]      = useState(720_000_000);
 
-  // Step 1 fields
   const [title,         setTitle]         = useState('Toyota Camry 2.5Q — một chủ');
   const [description,   setDescription]   = useState('Xe zin, bảo dưỡng định kỳ, lịch sử rõ ràng. Xem xe tại Hà Nội.');
+  const [localImages,   setLocalImages]   = useState<LocalListingImage[]>([]);
 
-  // Step 2 fields
   const [packageType,   setPackageType]   = useState<'basic'|'premium'|'vip'>('basic');
 
   const [loading,       setLoading]       = useState(false);
   const [error,         setError]         = useState<string | null>(null);
   const [createdId,     setCreatedId]     = useState<string | null>(null);
 
+  const maxImages = useMemo(
+    () => MAX_BY_PACKAGE[packageType] ?? 5,
+    [packageType],
+  );
+
+  function goToStep2() {
+    if (localImages.length < 1) {
+      setError('Vui lòng chọn ít nhất 1 ảnh xe (JPEG hoặc PNG).');
+      toast('Cần ít nhất một ảnh', 'warning');
+      return;
+    }
+    setError(null);
+    setStep(2);
+  }
+
   async function onSubmit() {
     if (!user) return;
-    setLoading(true); setError(null);
+    if (localImages.length < 1) {
+      setError('Vui lòng chọn ít nhất 1 ảnh.');
+      return;
+    }
+    if (localImages.length > maxImages) {
+      setError(`Gói ${packageType} cho phép tối đa ${maxImages} ảnh.`);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
     try {
       const res = await api<{ id: string }>('/listings', {
         method: 'POST',
         body: JSON.stringify({
-          title, description, priceVnd, sellerId: user.id, packageType,
-          imageUrls: [DEMO_IMG(1), DEMO_IMG(2), DEMO_IMG(3)],
-          carMake, carModel, carYear, mileageKm, fuelType, transmission,
+          title,
+          description,
+          priceVnd,
+          packageType,
+          imageUrls: [],
+          carMake,
+          carModel,
+          carYear,
+          mileageKm,
+          fuelType,
+          transmission,
         }),
       });
+
+      let uploaded = 0;
+      for (const img of localImages) {
+        await uploadListingImage(res.id, img.file);
+        uploaded += 1;
+      }
+
       setCreatedId(res.id);
-      toast('Đã gửi tin đăng chờ kiểm duyệt', 'success');
+      toast(`Đã gửi tin với ${uploaded} ảnh — chờ kiểm duyệt`, 'success');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Không tạo được tin');
       toast('Không thể tạo tin đăng', 'error');
@@ -87,13 +144,25 @@ export function CreateListingPage() {
   if (createdId) return (
     <div className="mx-auto max-w-lg py-12 text-center animate-scale-in">
       <div className="card p-10">
-        <div className="text-6xl mb-4">🎉</div>
+        <div className="mb-4 flex justify-center">
+          <AppIcon name="glitter" size="2xl" alt="" />
+        </div>
         <h2 className="font-display text-2xl font-bold text-brand-900">Tin đã được gửi!</h2>
         <p className="mt-2 text-muted">Tin của bạn đang chờ quản trị viên duyệt.</p>
         <p className="mt-1 font-mono text-xs text-muted">ID: {createdId}</p>
         <div className="mt-8 flex flex-col gap-3">
           <Link to="/" className="btn btn-primary w-full justify-center">Về trang chủ</Link>
-          <button onClick={() => { setCreatedId(null); setStep(0); }} className="btn btn-secondary w-full justify-center">Đăng tin khác</button>
+          <button
+            type="button"
+            onClick={() => {
+              setCreatedId(null);
+              setStep(0);
+              setLocalImages([]);
+            }}
+            className="btn btn-secondary w-full justify-center"
+          >
+            Đăng tin khác
+          </button>
         </div>
       </div>
     </div>
@@ -115,7 +184,6 @@ export function CreateListingPage() {
           </div>
         )}
 
-        {/* ── Step 0: Car info ── */}
         {step === 0 && (
           <div className="space-y-5 animate-slide-up">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -138,34 +206,35 @@ export function CreateListingPage() {
               <div>
                 <label className="block text-sm font-semibold text-ink mb-1.5">Nhiên liệu</label>
                 <select className="input-base" value={fuelType} onChange={e => setFuelType(e.target.value as typeof fuelType)}>
-                  <option value="petrol">⛽ Xăng</option>
-                  <option value="diesel">🛢 Dầu</option>
-                  <option value="electric">⚡ Điện</option>
-                  <option value="hybrid">🔋 Hybrid</option>
+                  <option value="petrol">Xăng</option>
+                  <option value="diesel">Dầu</option>
+                  <option value="electric">Điện</option>
+                  <option value="hybrid">Hybrid</option>
                   <option value="other">Khác</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-ink mb-1.5">Hộp số</label>
                 <select className="input-base" value={transmission} onChange={e => setTransmission(e.target.value as typeof transmission)}>
-                  <option value="automatic">⚙ Tự động</option>
-                  <option value="manual">🔧 Số sàn</option>
+                  <option value="automatic">Tự động</option>
+                  <option value="manual">Số sàn</option>
                   <option value="semi-automatic">Bán tự động</option>
                 </select>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-ink mb-1.5">Giá bán (VND)</label>
+              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-ink">
+                <AppIcon name={PRICE_ICON} size="xs" alt="" /> Giá bán (VND)
+              </label>
               <input type="number" className="input-base" value={priceVnd} onChange={e => setPriceVnd(Number(e.target.value))} min={0} required />
               <p className="mt-1 text-xs text-muted">≈ {(priceVnd / 1_000_000).toFixed(0)} triệu ₫</p>
             </div>
             <div className="flex justify-end">
-              <button className="btn btn-primary" onClick={() => setStep(1)}>Tiếp theo →</button>
+              <button type="button" className="btn btn-primary" onClick={() => setStep(1)}>Tiếp theo →</button>
             </div>
           </div>
         )}
 
-        {/* ── Step 1: Description & Images ── */}
         {step === 1 && (
           <div className="space-y-5 animate-slide-up">
             <div>
@@ -176,28 +245,35 @@ export function CreateListingPage() {
               <label className="block text-sm font-semibold text-ink mb-1.5">Mô tả chi tiết</label>
               <textarea className="input-base resize-none" rows={5} value={description} onChange={e => setDescription(e.target.value)} required />
             </div>
-            {/* Image placeholder */}
             <div>
               <label className="block text-sm font-semibold text-ink mb-2">Hình ảnh</label>
-              <div className="rounded-xl border-2 border-dashed border-brand-200 bg-brand-50/50 p-8 text-center">
-                <div className="text-3xl mb-2">📸</div>
-                <p className="text-sm text-muted">Demo dùng ảnh placeholder (picsum.photos)</p>
-                <p className="text-xs text-muted mt-1">Production: kéo thả hoặc chọn file từ máy</p>
-                <div className="mt-4 flex justify-center gap-2">
-                  {[1,2,3].map(i => <img key={i} src={DEMO_IMG(i)} alt="" className="h-14 w-20 rounded-lg object-cover shadow-sm" />)}
-                </div>
-              </div>
+              <ListingImageUploader
+                images={localImages}
+                onChange={setLocalImages}
+                maxImages={20}
+                disabled={loading}
+              />
+              <p className="text-xs text-muted mt-2">
+                Ảnh sẽ được tải lên server sau khi bạn gửi tin (tối đa theo gói ở bước cuối).
+              </p>
             </div>
             <div className="flex justify-between">
-              <button className="btn btn-ghost" onClick={() => setStep(0)}>← Quay lại</button>
-              <button className="btn btn-primary" onClick={() => setStep(2)}>Tiếp theo →</button>
+              <button type="button" className="btn btn-ghost" onClick={() => setStep(0)}>← Quay lại</button>
+              <button type="button" className="btn btn-primary" onClick={goToStep2}>Tiếp theo →</button>
             </div>
           </div>
         )}
 
-        {/* ── Step 2: Package selection ── */}
         {step === 2 && (
           <div className="space-y-5 animate-slide-up">
+            {localImages.length > maxImages && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                Bạn đã chọn {localImages.length} ảnh nhưng gói {packageType} chỉ cho phép {maxImages}. Hãy quay lại bước 2 để bớt ảnh.
+              </p>
+            )}
+            <h2 className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
+              <AppIcon name={PRICE_ICON} size="sm" alt="" /> Chọn gói tin
+            </h2>
             <div className="grid gap-4 sm:grid-cols-3">
               {PACKAGES.map(pkg => (
                 <button
@@ -210,27 +286,57 @@ export function CreateListingPage() {
                       : 'border-brand-100 hover:border-brand-300'
                   }`}
                 >
-                  {pkg.recommended && (
+                  {'recommended' in pkg && pkg.recommended && (
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 badge bg-brand-600 text-white text-[0.65rem]">Phổ biến</span>
                   )}
-                  <div className="text-2xl mb-2">{pkg.icon}</div>
+                  <div className="mb-2 flex justify-center">
+                    <AppIcon name={pkg.icon} size="lg" alt="" />
+                  </div>
                   <div className="font-display font-bold text-ink">{pkg.name}</div>
-                  <div className="text-brand-700 font-semibold mt-1">{pkg.price}</div>
+                  <div className="mt-1 inline-flex items-center gap-1 font-semibold text-brand-700">
+                    <AppIcon name={PRICE_ICON} size="xs" alt="" />
+                    {pkg.price}
+                  </div>
                   <div className="text-xs text-muted mt-0.5">{pkg.days} ngày</div>
                   <ul className="mt-3 space-y-1.5">
                     {pkg.features.map(f => (
                       <li key={f} className="flex items-center gap-1.5 text-xs text-muted">
-                        <span className="text-emerald-500 font-bold">✓</span> {f}
+                        <AppIcon name="priority" size="xs" alt="" className="opacity-80" /> {f}
                       </li>
                     ))}
                   </ul>
                 </button>
               ))}
             </div>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {localImages.slice(0, 6).map((img) => (
+                <img
+                  key={img.id}
+                  src={img.previewUrl}
+                  alt=""
+                  className="h-12 w-16 rounded object-cover border border-brand-100"
+                />
+              ))}
+              {localImages.length > 6 && (
+                <span className="text-xs text-muted self-center">+{localImages.length - 6} ảnh</span>
+              )}
+            </div>
             <div className="flex justify-between">
-              <button className="btn btn-ghost" onClick={() => setStep(1)}>← Quay lại</button>
-              <button className="btn btn-primary py-3 px-8" disabled={loading} onClick={onSubmit}>
-                {loading ? <><Spinner size="sm" className="text-white" /> Đang gửi…</> : '🚀 Gửi tin chờ duyệt'}
+              <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>← Quay lại</button>
+              <button
+                type="button"
+                className="btn btn-primary py-3 px-8"
+                disabled={loading || localImages.length < 1 || localImages.length > maxImages}
+                onClick={onSubmit}
+              >
+                {loading ? (
+                  <><Spinner size="sm" className="text-white" /> Đang tải ảnh & gửi tin…</>
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    <AppIcon name="racing" size="sm" alt="" className="brightness-0 invert" />
+                    Gửi tin chờ duyệt
+                  </span>
+                )}
               </button>
             </div>
           </div>

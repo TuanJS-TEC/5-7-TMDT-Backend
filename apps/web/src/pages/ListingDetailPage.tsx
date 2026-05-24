@@ -7,6 +7,7 @@ import { StatusBadge, PackageBadge } from '../components/ui/Badge';
 import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import { PageError } from '../components/ui/PageState';
+import { AppIcon, PRICE_ICON } from '../components/icons';
 import { fallbackListingImage, resolveListingImageUrl } from '../utils/image';
 
 interface SellerInfo { id?: string; fullName?: string; accountType?: string; displayPhone?: string; }
@@ -71,7 +72,7 @@ export function ListingDetailPage() {
         method: 'POST',
         body: JSON.stringify({ userId: user.id }),
       });
-      setFavMsg(res.message ?? 'Đã lưu vào yêu thích ♥');
+      setFavMsg(res.message ?? 'Đã lưu vào yêu thích');
       toast('Đã thêm xe vào danh sách yêu thích', 'success');
     } catch (e) {
       setFavMsg(e instanceof ApiError ? e.message : 'Lỗi khi lưu');
@@ -130,7 +131,9 @@ export function ListingDetailPage() {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs uppercase tracking-wide text-muted">Price</p>
+            <p className="inline-flex items-center justify-end gap-1 text-xs uppercase tracking-wide text-muted">
+              <AppIcon name={PRICE_ICON} size="xs" alt="" /> Giá
+            </p>
             <p className="font-display text-3xl font-bold text-brand-700">{formatPrice(listing.priceVnd)}</p>
           </div>
         </div>
@@ -185,17 +188,20 @@ export function ListingDetailPage() {
               {listing.carMake} {listing.carModel} · {listing.carYear}
             </p>
             <h2 className="mt-1.5 font-display text-xl font-bold text-brand-900 leading-snug">{listing.title}</h2>
-            <p className="mt-3 font-display text-3xl font-bold text-brand-700">{formatPrice(listing.priceVnd)}</p>
+            <p className="mt-3 inline-flex items-center gap-2 font-display text-3xl font-bold text-brand-700">
+              <AppIcon name={PRICE_ICON} size="md" alt="" />
+              {formatPrice(listing.priceVnd)}
+            </p>
 
             <dl className="mt-5 grid grid-cols-2 gap-2.5 text-sm">
               {[
-                { dt: '📅 Năm SX',   dd: String(listing.carYear) },
-                { dt: '🛣 Số km',    dd: `${new Intl.NumberFormat('vi-VN').format(listing.mileageKm)} km` },
-                { dt: '⛽ Nhiên liệu', dd: FUEL_LABELS[listing.fuelType] ?? listing.fuelType },
-                { dt: '⚙ Hộp số',   dd: TRANS_LABELS[listing.transmission] ?? listing.transmission },
-              ].map(({ dt, dd }) => (
-                <div key={dt} className="rounded-xl bg-brand-50 px-3 py-2.5">
-                  <dt className="text-xs text-muted">{dt}</dt>
+                { label: 'Năm SX', dd: String(listing.carYear) },
+                { label: 'Số km', dd: `${new Intl.NumberFormat('vi-VN').format(listing.mileageKm)} km` },
+                { label: 'Nhiên liệu', dd: FUEL_LABELS[listing.fuelType] ?? listing.fuelType },
+                { label: 'Hộp số', dd: TRANS_LABELS[listing.transmission] ?? listing.transmission },
+              ].map(({ label, dd }) => (
+                <div key={label} className="rounded-xl bg-brand-50 px-3 py-2.5">
+                  <dt className="text-xs text-muted">{label}</dt>
                   <dd className="font-semibold text-ink mt-0.5">{dd}</dd>
                 </div>
               ))}
@@ -219,7 +225,10 @@ export function ListingDetailPage() {
                 onClick={revealPhone}
                 className="btn btn-primary w-full py-2.5"
               >
-                📞 {phone ?? 'Xem số điện thoại'}
+                <span className="inline-flex items-center justify-center gap-2">
+                  <AppIcon name="vipCard" size="sm" alt="" className="brightness-0 invert" />
+                  {phone ?? 'Xem số điện thoại'}
+                </span>
               </button>
               {user ? (
                 <button
@@ -228,7 +237,14 @@ export function ListingDetailPage() {
                   onClick={addFavorite}
                   className="btn btn-secondary w-full py-2.5"
                 >
-                  {favLoading ? <Spinner size="sm" /> : '♥'} Lưu yêu thích
+                  {favLoading ? (
+                    <Spinner size="sm" />
+                  ) : (
+                    <span className="inline-flex items-center gap-2">
+                      <AppIcon name="heart" size="sm" alt="" />
+                      Lưu yêu thích
+                    </span>
+                  )}
                 </button>
               ) : (
                 <Link to="/login" className="btn btn-secondary w-full py-2.5 justify-center">

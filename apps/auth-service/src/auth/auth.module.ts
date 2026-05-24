@@ -22,6 +22,7 @@ import { SellerGuard } from '@car-marketplace/common';
 import { SmsNotificationService } from './sms-notification.service';
 import { AdminAccountService } from '../internal/admin-account.service';
 import { InternalApiKeyGuard } from '../internal/internal-api-key.guard';
+import { InternalPublicProfileService } from '../internal/internal-public-profile.service';
 import { InternalUsersController } from '../internal/internal-users.controller';
 import { SuperadminBootstrapService } from './superadmin-bootstrap.service';
 
@@ -41,7 +42,11 @@ const internalUc37 =
     ? { controllers: [] as const, providers: [] as const }
     : {
         controllers: [InternalUsersController],
-        providers: [AdminAccountService, InternalApiKeyGuard],
+        providers: [
+          AdminAccountService,
+          InternalPublicProfileService,
+          InternalApiKeyGuard,
+        ],
       };
 
 @Module({

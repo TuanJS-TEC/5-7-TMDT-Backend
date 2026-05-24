@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
 import type { ListingDto, ListingListResult } from '../types/listing';
+import { AppIcon, PRICE_ICON } from '../components/icons';
 import { PackageBadge } from '../components/ui/Badge';
 import { PageEmpty, PageError } from '../components/ui/PageState';
 import { fallbackListingImage, resolveListingImageUrl } from '../utils/image';
@@ -88,7 +89,8 @@ function CarCard({ listing }: { listing: ListingDto }) {
           <span>·</span>
           <span>{TRANS_LABELS[listing.transmission] ?? listing.transmission}</span>
         </div>
-        <p className="mt-auto pt-2 font-display text-xl font-bold text-brand-700">
+        <p className="mt-auto inline-flex items-center gap-1.5 pt-2 font-display text-xl font-bold text-brand-700">
+          <AppIcon name={PRICE_ICON} size="xs" alt="" />
           {formatPrice(listing.priceVnd)}
         </p>
       </div>
@@ -150,14 +152,14 @@ export function HomePage() {
         <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-6">
             <p className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand-700 shadow-sm">
-              NEN TANG MUA BAN O TO DA KIEM DUYET
+              NỀN TẢNG CHO MUA BÁN XE
             </p>
             <h1 className="font-display text-4xl font-bold leading-tight text-ink md:text-6xl">
               Tim xe phu hop
               <span className="block text-brand-700">cho nhu cau cua ban</span>
             </h1>
             <p className="max-w-2xl text-base text-muted md:text-lg">
-              Cam hung giao dien theo Carwow: tra cuu nhanh, loc thong minh, danh sach de doc va thong tin minh bach.
+              INSPIRED BY CARWOW, BUT BETTER.
             </p>
             <div className="flex flex-wrap gap-2">
               {TRENDING_TAGS.map((tag) => (
@@ -172,23 +174,23 @@ export function HomePage() {
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-brand-100 bg-white p-3">
-                <p className="text-xs text-muted">Danh gia</p>
+                <p className="text-xs text-muted">ĐÁNH GIÁ</p>
                 <p className="font-display text-lg font-bold text-ink">Excellent</p>
               </div>
               <div className="rounded-2xl border border-brand-100 bg-white p-3">
-                <p className="text-xs text-muted">Nguoi ban</p>
+                <p className="text-xs text-muted">NGƯỜI BÁN</p>
                 <p className="font-display text-lg font-bold text-ink">Da xac minh</p>
               </div>
               <div className="rounded-2xl border border-brand-100 bg-white p-3">
-                <p className="text-xs text-muted">Thanh toan</p>
-                <p className="font-display text-lg font-bold text-ink">Bao mat</p>
+                <p className="text-xs text-muted">THANH TOÁN</p>
+                <p className="font-display text-lg font-bold text-ink">BẢO MẬT VÀ AN TOÀN</p>
               </div>
             </div>
           </div>
 
           <div className="rounded-3xl border border-brand-200 bg-white p-4 shadow-sm md:p-6">
-            <h2 className="font-display text-xl font-bold text-ink">Tim xe ngay</h2>
-            <p className="mt-1 text-sm text-muted">Nhap tu khoa va chon bo loc de xem ket qua phu hop.</p>
+            <h2 className="font-display text-xl font-bold text-ink">TÌM XE NGAY</h2>
+            <p className="mt-1 text-sm text-muted">NHẬP VÀ TÌM KIẾM</p>
             <div className="mt-4 space-y-3">
               <input
                 className="input-base"
@@ -217,7 +219,7 @@ export function HomePage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-display text-2xl font-bold text-ink">Thuong hieu duoc tim nhieu</h2>
+        <h2 className="font-display text-2xl font-bold text-ink">THƯƠNG HIỆU ĐƯỢC TÌM NHIỀU</h2>
         <div className="flex flex-wrap gap-3">
           {CAR_MAKES.slice(1).map((m) => (
             <button
@@ -237,8 +239,8 @@ export function HomePage() {
 
       <section id="listings" className="card space-y-4 p-4 md:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-display text-lg font-semibold text-ink">Bo loc nang cao</h3>
-          <p className="text-sm text-muted">{total} ket qua</p>
+          <h3 className="font-display text-lg font-semibold text-ink">BỘ LỌC NÂNG CAO</h3>
+          <p className="text-sm text-muted">{total} Kết quả</p>
         </div>
         <div className="flex flex-wrap gap-3 items-center">
         <select
@@ -258,6 +260,7 @@ export function HomePage() {
           {Object.entries(TRANS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
         <div className="flex items-center gap-2">
+          <AppIcon name={PRICE_ICON} size="sm" alt="" className="shrink-0" />
           <input
             type="number"
             className="input-base w-32 bg-white"
@@ -294,8 +297,8 @@ export function HomePage() {
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-2xl font-bold text-ink">Xe dang duoc quan tam</h2>
-          <Link to="/" className="text-sm font-semibold text-brand-700 hover:underline">Xem tat ca</Link>
+          <h2 className="font-display text-2xl font-bold text-ink">Xe đang được quan tâm</h2>
+          <Link to="/" className="text-sm font-semibold text-brand-700 hover:underline">Xem tất cả</Link>
         </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {loading
@@ -307,7 +310,7 @@ export function HomePage() {
 
       {!loading && items.length === 0 && !error && (
         <PageEmpty
-          icon="🚗"
+          icon="racing"
           title="Chua tim thay xe phu hop"
           description={
             filters.make || filters.fuelType || filters.transmission || filters.search
@@ -321,29 +324,37 @@ export function HomePage() {
               className="btn btn-secondary"
               onClick={() => { const reset: Filters = { make:'', fuelType:'', transmission:'', minPrice:'', maxPrice:'', search:'' }; setFilters(reset); fetchListings(reset); }}
             >
-              Xoa bo loc
+              Xóa bộ lọc
             </button>
           ) : undefined}
         />
       )}
 
-      <section className="grid gap-4 rounded-3xl border border-brand-100 bg-white p-5 md:grid-cols-3">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted">Buoc 1</p>
-          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Tim xe va so sanh</h3>
-          <p className="mt-2 text-sm text-muted">Tra cuu nhanh theo hang xe, gia, hop so, nhien lieu va tinh trang goi dang tin.</p>
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted">Buoc 2</p>
-          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Lien he nguoi ban</h3>
-          <p className="mt-2 text-sm text-muted">Thong tin listing minh bach, de dang lien lac va theo doi don thanh toan.</p>
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted">Buoc 3</p>
-          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Chot giao dich an toan</h3>
-          <p className="mt-2 text-sm text-muted">He thong phan quyen va kiem duyet giup giam rui ro trong toan bo quy trinh.</p>
-        </div>
-      </section>
+    <section className="grid gap-4 rounded-3xl border border-brand-100 bg-white p-5 md:grid-cols-3">
+      <div>
+        <p className="text-xs uppercase tracking-wide text-muted">Bước 1</p>
+        <h3 className="mt-1 font-display text-lg font-semibold text-ink">Tìm xe và so sánh</h3>
+        <p className="mt-2 text-sm text-muted">
+          Tra cứu nhanh theo hãng xe, giá, hộp số, nhiên liệu và tình trạng gói đăng tin.
+        </p>
+      </div>
+
+      <div>
+        <p className="text-xs uppercase tracking-wide text-muted">Bước 2</p>
+        <h3 className="mt-1 font-display text-lg font-semibold text-ink">Liên hệ người bán</h3>
+        <p className="mt-2 text-sm text-muted">
+          Thông tin listing minh bạch, dễ dàng liên lạc và theo dõi đơn thanh toán.
+        </p>
+      </div>
+
+      <div>
+        <p className="text-xs uppercase tracking-wide text-muted">Bước 3</p>
+        <h3 className="mt-1 font-display text-lg font-semibold text-ink">Chốt giao dịch an toàn</h3>
+        <p className="mt-2 text-sm text-muted">
+          Hệ thống phân quyền và kiểm duyệt giúp giảm rủi ro trong toàn bộ quy trình.
+        </p>
+      </div>
+    </section>
     </div>
   );
 }

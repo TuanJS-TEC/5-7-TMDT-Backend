@@ -1,6 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { useToast } from '../components/ui/Toast';
+import { AppIcon, PRICE_ICON } from '../components/icons';
 
 function roleLabel(role: string) {
   if (role === 'admin')  return 'Quản trị viên';
@@ -20,7 +21,9 @@ export function UserProfilePage() {
 
   if (!user) return (
     <div className="flex flex-col items-center py-16 text-center">
-      <div className="text-5xl mb-4">🔒</div>
+      <div className="mb-4">
+        <AppIcon name="profile" size="2xl" alt="" />
+      </div>
       <h1 className="font-display text-xl font-bold text-brand-900">Chưa đăng nhập</h1>
       <p className="mt-2 text-muted">Vui lòng đăng nhập để xem trang này.</p>
       <Link to="/login" className="btn btn-primary mt-6">Đăng nhập</Link>
@@ -114,14 +117,28 @@ export function UserProfilePage() {
           {currentUser.role === 'seller' && (
             <>
               <Link to="/seller/listing/new" className="btn btn-primary justify-center">+ Đăng tin bán xe</Link>
-              <Link to="/seller/orders"      className="btn btn-secondary justify-center">📦 Đơn thanh toán</Link>
+              <Link to="/seller/listings" className="btn btn-secondary justify-center">Tin của tôi</Link>
+              <Link to="/seller/orders" className="btn btn-secondary justify-center inline-flex items-center gap-2">
+                <AppIcon name={PRICE_ICON} size="sm" alt="" /> Đơn thanh toán
+              </Link>
             </>
           )}
           {currentUser.role === 'admin' && (
-            <Link to="/admin/moderation" className="btn btn-secondary justify-center sm:col-span-2">🛡 Kiểm duyệt tin đăng</Link>
+            <>
+              <Link to="/admin/moderation" className="btn btn-secondary justify-center inline-flex items-center gap-2">
+                <AppIcon name="priority" size="sm" alt="" /> Kiểm duyệt tin đăng
+              </Link>
+              <Link to="/admin/sold" className="btn btn-secondary justify-center inline-flex items-center gap-2">
+                <AppIcon name="racing" size="sm" alt="" /> Tin đã bán
+              </Link>
+            </>
           )}
-          <Link to="/favorites" className="btn btn-secondary justify-center">♥ Xe đã lưu</Link>
-          <Link to="/"          className="btn btn-ghost   justify-center">🚗 Xem xe đang bán</Link>
+          <Link to="/favorites" className="btn btn-secondary justify-center inline-flex items-center gap-2">
+            <AppIcon name="heart" size="sm" alt="" /> Xe đã lưu
+          </Link>
+          <Link to="/" className="btn btn-ghost justify-center inline-flex items-center gap-2">
+            <AppIcon name="racing" size="sm" alt="" /> Xem xe đang bán
+          </Link>
         </div>
       </div>
 

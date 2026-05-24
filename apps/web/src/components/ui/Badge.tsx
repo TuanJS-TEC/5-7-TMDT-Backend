@@ -1,3 +1,5 @@
+import { AppIcon, PACKAGE_ICON } from '../icons';
+
 type BadgeVariant = 'brand' | 'success' | 'warning' | 'danger' | 'muted' | 'gold' | 'purple';
 
 const styles: Record<BadgeVariant, string> = {
@@ -41,6 +43,9 @@ export function StatusBadge({ status }: { status: string }) {
     rejected:  { variant: 'danger',  label: 'Từ chối' },
     draft:     { variant: 'muted',   label: 'Nháp' },
     sold:      { variant: 'purple',  label: 'Đã bán' },
+    removed:   { variant: 'muted',   label: 'Đã gỡ' },
+    expired:   { variant: 'muted',   label: 'Hết hạn' },
+    modification_requested: { variant: 'warning', label: 'Cần sửa' },
   };
   const cfg = map[status] ?? { variant: 'muted' as BadgeVariant, label: status };
   return <Badge variant={cfg.variant} dot>{cfg.label}</Badge>;
@@ -48,7 +53,20 @@ export function StatusBadge({ status }: { status: string }) {
 
 /** Map package type to badge */
 export function PackageBadge({ type }: { type: string }) {
-  if (type === 'vip')     return <Badge variant="gold">⭐ VIP</Badge>;
-  if (type === 'premium') return <Badge variant="purple">💎 Nổi bật</Badge>;
+  const iconName = PACKAGE_ICON[type];
+  if (type === 'vip' && iconName) {
+    return (
+      <Badge variant="gold" className="inline-flex items-center gap-1">
+        <AppIcon name={iconName} size="xs" alt="" /> VIP
+      </Badge>
+    );
+  }
+  if (type === 'premium' && iconName) {
+    return (
+      <Badge variant="purple" className="inline-flex items-center gap-1">
+        <AppIcon name={iconName} size="xs" alt="" /> Nổi bật
+      </Badge>
+    );
+  }
   return null;
 }

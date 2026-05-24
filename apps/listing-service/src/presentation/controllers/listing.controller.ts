@@ -38,6 +38,8 @@ import { DeleteListingCommand } from '../../application/commands/delete-listing/
 import { GetListingDetailQuery } from '../../application/queries/get-listing-detail/get-listing-detail.query';
 import { GetListingListQuery } from '../../application/queries/get-listing-list/get-listing-list.query';
 import { GetSellerListingsQuery } from '../../application/queries/get-seller-listings/get-seller-listings.query';
+import { GetMyListingsQuery } from '../../application/queries/get-my-listings/get-my-listings.query';
+import { GetAdminSoldListingsQuery } from '../../application/queries/get-admin-sold-listings/get-admin-sold-listings.query';
 import { ListingReadRepository } from '../../infrastructure/persistence/read/listing.read.repository';
 import { SearchListingsQuery } from '../../application/queries/search-listings/search-listings.query';
 import { FilterListingsQuery } from '../../application/queries/filter-listings/filter-listings.query';
@@ -62,6 +64,11 @@ import { SellerListingsRemovalService } from '../../application/services/seller-
 import { Uc38RemovalAuditReadRepository } from '../../infrastructure/persistence/read/uc38-removal-audit.read.repository';
 import { MarkListingSoldCommand } from '../../application/commands/mark-listing-sold/mark-listing-sold.command';
 import { JwtAuthGuard, SellerGuard, JwtRequestUser } from '@car-marketplace/common';
+import { AdminGuard } from '../../auth/admin.guard';
+import {
+  isPubliclyVisible,
+  MODERATION_QUEUE_STATUSES,
+} from '../../domain/listing-status.rules';
 import { RenewListingCommand } from '../../application/commands/renew-listing/renew-listing.command';
 import { RenewListingDto } from '../dto/renew-listing.dto';
 import { ListingExpirationService } from '../../application/services/listing-expiration.service';
@@ -87,16 +94,20 @@ export class ListingController {
    * Bài đăng được tạo với status = 'pending' chờ admin kiểm duyệt.
    */
   @Post()
+  @UseGuards(JwtAuthGuard, SellerGuard)
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateListingDto) {
+  create(
+    @Body() dto: CreateListingDto,
+    @Req() req: { user: JwtRequestUser },
+  ) {
     return this.commandBus.execute(
       new CreateListingCommand(
         dto.title,
         dto.description,
         dto.priceVnd,
-        dto.sellerId,
+        req.user.userId,
         dto.packageType,
-        dto.imageUrls,
+        dto.imageUrls ?? [],
         dto.carMake,
         dto.carModel,
         dto.carYear,
@@ -167,21 +178,25 @@ export class ListingController {
    * UC32 bước 1 — QTV xem danh sách tin đang chờ duyệt
    */
   @Get('admin/moderation/pending')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async getPendingModerationListings(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('sortBy', new DefaultValuePipe('createdAt')) sortBy: string,
     @Query('sortOrder', new DefaultValuePipe('desc')) sortOrder: 'asc' | 'desc',
   ) {
-    const result = await this.queryBus.execute(
-      new GetListingListQuery(page, limit, 'pending', sortBy, sortOrder),
+    const result = await this.listingReadRepository.findModerationQueue(
+      page,
+      limit,
+      sortBy,
+      sortOrder,
     );
 
     return {
       ...result,
       items: result.items.map((item) => ({
         ...item,
-        moderationStatus: 'pending',
+        moderationStatus: item.status,
       })),
     };
   }
@@ -191,11 +206,17 @@ export class ListingController {
    * UC32 bước 2 — QTV xem chi tiết tin + bằng chứng ảnh/CCCD (mock)
    */
   @Get('admin/moderation/pending/:id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async getPendingModerationDetail(@Param('id', ParseUUIDPipe) id: string) {
     const listing = await this.queryBus.execute(new GetListingDetailQuery(id));
-    if (!listing || listing.status !== 'pending') {
+    if (
+      !listing ||
+      !MODERATION_QUEUE_STATUSES.includes(
+        listing.status as (typeof MODERATION_QUEUE_STATUSES)[number],
+      )
+    ) {
       throw new NotFoundException(
-        'Tin dang khong ton tai hoac khong o trang thai cho duyet',
+        'Tin dang khong ton tai hoac khong o hang doi kiem duyet',
       );
     }
 
@@ -220,6 +241,7 @@ export class ListingController {
    * UC32 bước 3 — QTV duyệt tin => Active (internal: approved)
    */
   @Patch('admin/moderation/:id/approve')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async approveFromModeration(
     @Param('id', ParseUUIDPipe) id: string,
@@ -241,6 +263,7 @@ export class ListingController {
    * UC32 bước 4 — QTV từ chối tin => Rejected
    */
   @Patch('admin/moderation/:id/reject')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async rejectFromModeration(
     @Param('id', ParseUUIDPipe) id: string,
@@ -262,6 +285,7 @@ export class ListingController {
    * UC33 bước 2-3 — QTV yêu cầu seller chỉnh sửa tin đăng
    */
   @Patch('admin/moderation/:id/request-modification')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async requestModificationFromModeration(
     @Param('id', ParseUUIDPipe) id: string,
@@ -283,6 +307,7 @@ export class ListingController {
    * UC35 bước 1 — QTV xem danh sách report vi phạm
    */
   @Get('admin/reports')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async listReports(
     @Query('status') status?: 'pending' | 'processed',
   ) {
@@ -294,6 +319,7 @@ export class ListingController {
    * UC35 bước 2 — QTV xem chi tiết report + bằng chứng
    */
   @Get('admin/reports/:reportId')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async getReportDetail(@Param('reportId', ParseUUIDPipe) reportId: string) {
     return this.reportModerationService.getReportDetail(reportId);
   }
@@ -305,6 +331,7 @@ export class ListingController {
    * UC38 — khi action = remove_all_listings: gỡ (soft) toàn bộ tin approved của seller + audit.
    */
   @Patch('admin/reports/:reportId/process')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async processReport(
     @Param('reportId', ParseUUIDPipe) reportId: string,
@@ -323,6 +350,7 @@ export class ListingController {
    * UC37 — khóa tài khoản từ quản lý người dùng (không gắn báo cáo UC35).
    */
   @Post('admin/users/:userId/lock')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async lockUserAccount(
     @Param('userId', ParseUUIDPipe) userId: string,
@@ -345,6 +373,7 @@ export class ListingController {
    * UC36 — lịch sử cảnh báo chính thức của tài khoản người bán.
    */
   @Get('admin/sellers/:sellerId/warnings')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async listSellerWarnings(@Param('sellerId', ParseUUIDPipe) sellerId: string) {
     const items = await this.sellerWarningReadRepository.findBySellerId(sellerId);
     return {
@@ -358,6 +387,7 @@ export class ListingController {
    * UC38 — gỡ hiển thị toàn bộ tin đang active (`approved`) của seller (lệnh hàng loạt).
    */
   @Post('admin/sellers/:sellerId/listings/remove-all-active')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async removeAllActiveListingsForSeller(
     @Param('sellerId', ParseUUIDPipe) sellerId: string,
@@ -385,6 +415,7 @@ export class ListingController {
    * UC38 bước 4 — lịch sử thao tác gỡ tin hàng loạt theo seller.
    */
   @Get('admin/sellers/:sellerId/bulk-listing-removals')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async listBulkListingRemovalsBySeller(
     @Param('sellerId', ParseUUIDPipe) sellerId: string,
   ) {
@@ -401,6 +432,7 @@ export class ListingController {
    * UC38 — toàn bộ lịch sử gỡ tin hàng loạt (dashboard QTV).
    */
   @Get('admin/bulk-listing-removals')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async listAllBulkListingRemovals() {
     const items = await this.uc38RemovalAuditReadRepository.findAll();
     return {
@@ -414,6 +446,7 @@ export class ListingController {
    * UC56 — trigger thu cong de test/chay ngay luong auto an tin het han.
    */
   @Post('admin/jobs/expire-listings/run')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async runExpireListingsJob() {
     const data = await this.listingExpirationService.runAutoExpire('manual');
@@ -569,6 +602,35 @@ export class ListingController {
   }
 
   /**
+   * GET /api/v1/listings/me
+   * UC25 — Seller xem tất cả tin của mình (mọi trạng thái)
+   */
+  @Get('me')
+  @UseGuards(JwtAuthGuard, SellerGuard)
+  listMyListings(
+    @Req() req: { user: JwtRequestUser },
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    return this.queryBus.execute(
+      new GetMyListingsQuery(req.user.userId, page, limit),
+    );
+  }
+
+  /**
+   * GET /api/v1/listings/admin/sold
+   * UC25 — Admin xem tin đã bán
+   */
+  @Get('admin/sold')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  listSoldForAdmin(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+  ) {
+    return this.queryBus.execute(new GetAdminSoldListingsQuery(page, limit));
+  }
+
+  /**
    * GET /api/v1/listings/seller/:sellerId
    * Lấy danh sách bài đăng của một người bán cụ thể
    */
@@ -604,7 +666,7 @@ export class ListingController {
     // Lấy thông tin chi tiết listing
     const listing = await this.queryBus.execute(new GetListingDetailQuery(id));
 
-    if (!listing || listing.status !== 'approved') { // Kiểm tra status của tin
+    if (!listing || !isPubliclyVisible(listing.status, listing.expiresAt)) {
       throw new NotFoundException('Tin đăng này không tồn tại hoặc đã bị gỡ.'); // UC4 A1
     }
     const rawListing = await this.listingReadRepository.findById(id); // Lấy raw record để update
@@ -633,7 +695,7 @@ export class ListingController {
   @Get(':id/phone')
   async getSellerPhone(@Param('id', ParseUUIDPipe) id: string) {
     const listing = await this.queryBus.execute(new GetListingDetailQuery(id));
-    if (!listing || listing.status !== 'approved') {
+    if (!listing || !isPubliclyVisible(listing.status, listing.expiresAt)) {
       throw new NotFoundException('Tin đăng này không tồn tại hoặc đã bị gỡ.');
     }
 
@@ -660,10 +722,10 @@ export class ListingController {
     @Body('userId', ParseUUIDPipe) userId: string,
   ) {
     const listing = await this.queryBus.execute(new GetListingDetailQuery(id));
-    if (!listing || listing.status !== 'approved') {
+    if (!listing || !isPubliclyVisible(listing.status, listing.expiresAt)) {
       throw new NotFoundException('Tin đăng không tồn tại hoặc chưa được duyệt.');
     }
-    
+
     // Giả lập tracking (UC8)
     console.log(`Mock: Tracking - Người dùng ${userId} đã lưu xe ${id} vào Mục Yêu Thích`);
     
@@ -695,7 +757,7 @@ export class ListingController {
   @Get(':id/zalo')
   async getZaloLink(@Param('id', ParseUUIDPipe) id: string) {
     const listing = await this.queryBus.execute(new GetListingDetailQuery(id));
-    if (!listing || listing.status !== 'approved') {
+    if (!listing || !isPubliclyVisible(listing.status, listing.expiresAt)) {
       throw new NotFoundException('Tin đăng này không tồn tại hoặc đã bị gỡ.');
     }
 
@@ -716,11 +778,16 @@ export class ListingController {
    * UC16 — Người bán chỉnh sửa bài đăng (khi còn ở trạng thái pending/draft)
    */
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateListingDto) {
+  @UseGuards(JwtAuthGuard, SellerGuard)
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateListingDto,
+    @Req() req: { user: JwtRequestUser },
+  ) {
     return this.commandBus.execute(
       new UpdateListingCommand(
         id,
-        dto.sellerId,
+        req.user.userId,
         dto.title,
         dto.description,
         dto.priceVnd,
@@ -733,6 +800,7 @@ export class ListingController {
    * UC16 bước 9 — Admin phê duyệt bài đăng → status chuyển 'approved'
    */
   @Post(':id/approve')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async approve(
     @Param('id', ParseUUIDPipe) id: string,
@@ -756,6 +824,7 @@ export class ListingController {
    * notification-service gửi thông báo cho người bán.
    */
   @Post(':id/reject')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @HttpCode(HttpStatus.OK)
   async reject(
     @Param('id', ParseUUIDPipe) id: string,

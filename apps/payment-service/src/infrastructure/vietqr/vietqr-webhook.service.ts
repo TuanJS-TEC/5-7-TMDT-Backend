@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'crypto';
 import { PaymentWriteRepository } from '../persistence/write/payment.write.repository';
 import { PaymentOrderCompletionService } from '../../application/services/payment-order-completion.service';
 import { VietQrService } from './vietqr.service';
@@ -35,6 +36,40 @@ export class VietQrWebhookService {
     @Inject(WEBHOOK_ANOMALY_STORE)
     private readonly anomalies: WebhookAnomalyRecord[],
   ) {}
+
+  /**
+   * UC28 (dev) — mô phỏng webhook ngân hàng báo thanh toán thành công.
+   * Dùng từ trang sandbox hoặc POST .../simulate-success khi PAYMENT_DEMO_MODE=true.
+   */
+  async processSandboxSuccess(orderId: string): Promise<VietQrWebhookResult> {
+    const order = await this.writeRepo.findById(orderId);
+    if (!order) {
+      return { handled: false, code: 'ORDER_NOT_FOUND', message: 'Không tìm thấy đơn.' };
+    }
+    if (order.paymentMethod !== 'qr_banking') {
+      return { handled: false, code: 'NOT_QR_ORDER', message: 'Đơn không phải VietQR.' };
+    }
+
+    const timestamp = new Date().toISOString();
+    const transaction_id = `demo-${randomBytes(8).toString('hex')}`;
+    const signature = this.vietQr.signWebhookPayload({
+      order_id: order.id,
+      transaction_id,
+      amount: order.amountVnd,
+      status: 'success',
+      timestamp,
+    });
+
+    return this.process({
+      order_id: order.id,
+      transaction_id,
+      amount: order.amountVnd,
+      status: 'success',
+      timestamp,
+      signature,
+      transfer_content: order.transferContent ?? order.id,
+    });
+  }
 
   async process(input: VietQrWebhookInput): Promise<VietQrWebhookResult> {
     const secret = this.config.get<string>('PAYMENT_WEBHOOK_SECRET')?.trim();

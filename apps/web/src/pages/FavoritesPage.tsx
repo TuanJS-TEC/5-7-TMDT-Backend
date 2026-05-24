@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import type { ListingDto } from '../types/listing';
 import { useToast } from '../components/ui/Toast';
 import { PageEmpty, PageError, PageLoading } from '../components/ui/PageState';
+import { AppIcon, PRICE_ICON } from '../components/icons';
 import { fallbackListingImage, resolveListingImageUrl } from '../utils/image';
 
 function formatPrice(vnd: number) {
@@ -51,7 +52,9 @@ export function FavoritesPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-brand-900">♥ Xe đã lưu</h1>
+          <h1 className="font-display text-2xl font-bold text-brand-900 inline-flex items-center gap-2">
+            <AppIcon name="heart" size="md" alt="" /> Xe đã lưu
+          </h1>
           <p className="mt-1 text-sm text-muted" aria-live="polite">
             {items.length > 0 ? `${items.length} xe trong danh sách yêu thích` : 'Danh sách yêu thích của bạn'}
           </p>
@@ -69,7 +72,7 @@ export function FavoritesPage() {
         <PageLoading label="Đang tải danh sách yêu thích..." />
       ) : items.length === 0 ? (
         <PageEmpty
-          icon="💔"
+          icon="heart"
           title="Chưa có xe nào"
           description='Khám phá danh sách xe và nhấn "Lưu yêu thích" trên trang chi tiết để lưu lại.'
           action={<Link to="/" className="btn btn-primary">Khám phá xe</Link>}
@@ -91,14 +94,17 @@ export function FavoritesPage() {
                   loading="lazy"
                   onError={(e) => { e.currentTarget.src = fallbackListingImage(l.id); }}
                 />
-                <span className="absolute left-2.5 top-2.5 badge bg-red-500 text-white">♥</span>
+                <span className="absolute left-2.5 top-2.5 badge bg-red-500 text-white inline-flex items-center p-1">
+                  <AppIcon name="heart" size="xs" alt="" className="brightness-0 invert" />
+                </span>
               </div>
               <div className="flex flex-col gap-1.5 p-4">
                 <p className="text-xs text-muted">{l.carMake} {l.carModel} · {l.carYear}</p>
                 <h2 className="font-display font-semibold text-brand-900 group-hover:text-brand-600 transition-colors line-clamp-2 leading-snug">
                   {l.title}
                 </h2>
-                <p className="mt-auto pt-2 font-display text-xl font-bold text-brand-700">
+                <p className="mt-auto inline-flex items-center gap-1.5 pt-2 font-display text-xl font-bold text-brand-700">
+                  <AppIcon name={PRICE_ICON} size="xs" alt="" />
                   {formatPrice(l.priceVnd)}
                 </p>
               </div>

@@ -30,6 +30,7 @@ import { DemoWalletService } from './infrastructure/wallet/demo-wallet.service';
 import { EWalletWebhookService } from './infrastructure/wallet/e-wallet-webhook.service';
 import { EWalletIpTrackerService } from './infrastructure/wallet/e-wallet-ip-tracker.service';
 import { DemoWalletSandboxController } from './presentation/controllers/demo-wallet-sandbox.controller';
+import { DemoVietQrSandboxController } from './presentation/controllers/demo-vietqr-sandbox.controller';
 import { DemoAtmGatewayService } from './infrastructure/atm/demo-atm-gateway.service';
 import { AtmBankingWebhookService } from './infrastructure/atm/atm-banking-webhook.service';
 import { AtmBankingIpTrackerService } from './infrastructure/atm/atm-banking-ip-tracker.service';
@@ -69,6 +70,7 @@ const repositories = [
     Uc31PaymentWebhookController,
     DemoWalletSandboxController,
     DemoAtmSandboxController,
+    DemoVietQrSandboxController,
   ],
   providers: [
     {

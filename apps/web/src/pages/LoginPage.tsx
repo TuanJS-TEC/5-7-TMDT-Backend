@@ -6,6 +6,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import { FormField } from '../components/ui/FormField';
 import { PageError } from '../components/ui/PageState';
+import { AppIcon } from '../components/icons';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -36,7 +37,7 @@ export function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      await login(phoneNormalized, password);
+      await login(phoneNormalized.replace(/\s+/g, ''), password);
       toast('Đăng nhập thành công', 'success');
       navigate(from, { replace: true });
     } catch (err) {
@@ -62,12 +63,16 @@ export function LoginPage() {
           <div className="pointer-events-none absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-brand-400/20 blur-2xl" />
           <div className="relative">
             <Link to="/" className="flex items-center gap-2.5">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 font-display text-xl font-bold">C</span>
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+                <AppIcon name="racing" size="md" alt="Car Marketplace" className="brightness-0 invert" />
+              </span>
               <span className="font-display text-xl font-bold">Car Marketplace</span>
             </Link>
           </div>
           <div className="relative">
-            <div className="text-5xl mb-6">🚗</div>
+            <div className="mb-6">
+              <AppIcon name="racing" size="2xl" alt="" className="brightness-0 invert opacity-95" />
+            </div>
             <h2 className="font-display text-2xl font-bold leading-snug">
               Find, Buy, Sell<br />
               <span className="text-brand-200">all in one place</span>
@@ -78,13 +83,15 @@ export function LoginPage() {
           </div>
           <div className="relative flex flex-col gap-3">
             {[
-              { icon: '✓', text: 'Tin đăng đã được kiểm duyệt' },
-              { icon: '✓', text: 'Thông tin người bán xác thực' },
-              { icon: '✓', text: 'Giao dịch an toàn, minh bạch' },
-            ].map((item) => (
-              <div key={item.text} className="flex items-center gap-2 text-sm text-white/80">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/25 text-emerald-300 text-xs font-bold">{item.icon}</span>
-                {item.text}
+              'Tin đăng đã được kiểm duyệt',
+              'Thông tin người bán xác thực',
+              'Giao dịch an toàn, minh bạch',
+            ].map((text) => (
+              <div key={text} className="flex items-center gap-2 text-sm text-white/80">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/25">
+                  <AppIcon name="priority" size="xs" alt="" className="brightness-0 invert" />
+                </span>
+                {text}
               </div>
             ))}
           </div>
@@ -148,7 +155,7 @@ export function LoginPage() {
                     tabIndex={-1}
                     aria-label={showPwd ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                   >
-                    {showPwd ? '🙈' : '👁'}
+                    <span className="text-xs font-semibold">{showPwd ? 'Ẩn' : 'Hiện'}</span>
                   </button>
                 </div>
               </FormField>
@@ -165,7 +172,7 @@ export function LoginPage() {
             <div className="mt-8 rounded-xl border border-brand-100 bg-brand-50/50 p-3">
               <p className="text-xs text-center text-muted font-medium">Demo accounts</p>
               <div className="mt-2 space-y-1 text-xs text-muted text-center">
-                <p>👤 Người mua · 👔 Người bán (showroom) · 🛡 Admin</p>
+                <p>Người mua · Người bán (showroom) · Admin</p>
                 <p className="text-brand-600">Đăng ký tài khoản mới để thử nghiệm</p>
               </div>
             </div>

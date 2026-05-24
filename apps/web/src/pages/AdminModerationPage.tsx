@@ -5,6 +5,7 @@ import type { ListingDto } from '../types/listing';
 import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import { PageEmpty, PageError } from '../components/ui/PageState';
+import { AppIcon } from '../components/icons';
 import { fallbackListingImage, resolveListingImageUrl } from '../utils/image';
 
 type PendingItem = ListingDto & { moderationStatus?: string };
@@ -38,7 +39,7 @@ export function AdminModerationPage() {
     if (!user) return; setMsg(null);
     try {
       await api(`/listings/admin/moderation/${id}/approve`, { method: 'PATCH', body: JSON.stringify({ moderatorId: user.id }) });
-      setMsg('✓ Đã duyệt tin. Xe sẽ hiện trên trang chủ.');
+      setMsg('Đã duyệt tin. Xe sẽ hiện trên trang chủ.');
       toast('Đã duyệt tin đăng thành công', 'success');
       await load();
     } catch (e) {
@@ -53,7 +54,7 @@ export function AdminModerationPage() {
     setError(null); setMsg(null);
     try {
       await api(`/listings/admin/moderation/${rejectId}/reject`, { method: 'PATCH', body: JSON.stringify({ moderatorId: user.id, reason: reason.trim() }) });
-      setMsg('✓ Đã từ chối tin đăng.');
+      setMsg('Đã từ chối tin đăng.');
       toast('Đã từ chối tin đăng', 'warning');
       setRejectId(null); setReason('');
       await load();
@@ -68,7 +69,9 @@ export function AdminModerationPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold text-amber-950">🛡 Kiểm duyệt tin đăng</h1>
+          <h1 className="font-display text-2xl font-bold text-amber-950 inline-flex items-center gap-2">
+            <AppIcon name="priority" size="md" alt="" /> Kiểm duyệt tin đăng
+          </h1>
           <p className="mt-1 text-sm text-muted">Chỉ tài khoản <strong>admin</strong> thấy trang này.</p>
         </div>
         {/* Stats card */}
@@ -87,7 +90,7 @@ export function AdminModerationPage() {
         <div className="flex items-center justify-center py-16"><Spinner size="lg" className="text-amber-600" /></div>
       ) : items.length === 0 ? (
         <PageEmpty
-          icon="✅"
+          icon="factCheck"
           title="Không có tin chờ duyệt"
           description="Tất cả tin đăng đã được xử lý."
         />
@@ -139,7 +142,10 @@ export function AdminModerationPage() {
                           onClick={() => approve(row.id)}
                           className="btn bg-emerald-600 text-white hover:bg-emerald-700 py-1.5 px-3 text-xs"
                         >
-                          ✓ Duyệt
+                          <span className="inline-flex items-center gap-1">
+                            <AppIcon name="priority" size="xs" alt="" className="brightness-0 invert" />
+                            Duyệt
+                          </span>
                         </button>
                         <button
                           type="button"

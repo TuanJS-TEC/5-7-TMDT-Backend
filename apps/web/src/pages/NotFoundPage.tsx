@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { AppIcon } from '../components/icons';
 
 export function NotFoundPage() {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export function NotFoundPage() {
           404
         </span>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-6xl animate-bounce-soft">🚗</span>
+          <AppIcon name="browserError" size="2xl" alt="" className="animate-bounce-soft" />
         </div>
       </div>
 

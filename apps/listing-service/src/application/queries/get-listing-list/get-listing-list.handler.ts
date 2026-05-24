@@ -19,13 +19,13 @@ export class GetListingListHandler
 
   async execute(query: GetListingListQuery): Promise<ListingListResult> {
     // return this.readRepo.findMany(query.page, query.limit, query.status);
-    const defaultStatus: ListingStatus = 'approved'; // Mặc định hiển thị tin đã duyệt
+    // Dev — API công khai chỉ trả tin đang hiển thị trên sàn (approved, chưa hết hạn).
+    const publicStatus: ListingStatus = 'approved';
 
-    // Gọi findMany từ repository, truyền thêm sortBy và sortOrder
     return this.readRepo.findMany(
       query.page,
       query.limit,
-      query.status ?? defaultStatus, // Nếu không có status, dùng default
+      publicStatus,
       query.sortBy,
       query.sortOrder,
       query.search,

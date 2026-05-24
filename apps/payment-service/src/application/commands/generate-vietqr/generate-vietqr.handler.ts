@@ -63,10 +63,11 @@ export class GenerateVietQrHandler
       });
     }
 
+    const useDemo = this.vietQr.useDemoImage();
     const bankBin = this.config.get<string>('VIETQR_BANK_BIN')?.trim();
     const accountNo = this.config.get<string>('VIETQR_ACCOUNT_NO')?.trim();
     const accountName = this.config.get<string>('VIETQR_ACCOUNT_NAME')?.trim();
-    if (!bankBin || !accountNo || !accountName) {
+    if (!useDemo && (!bankBin || !accountNo || !accountName)) {
       throw new ServiceUnavailableException({
         code: 'VIETQR_NOT_CONFIGURED',
         message: 'Hệ thống chưa cấu hình tài khoản nhận VietQR (VIETQR_*).',
@@ -77,7 +78,7 @@ export class GenerateVietQrHandler
     const expiresAt = new Date(now.getTime() + QR_TTL_MS);
     let qrImageUrl: string;
     try {
-      qrImageUrl = this.vietQr.buildQuicklinkImageUrl({
+      qrImageUrl = this.vietQr.resolveQrImageUrl({
         orderId: order.id,
         amountVnd: order.amountVnd,
       });
@@ -100,9 +101,9 @@ export class GenerateVietQrHandler
     return {
       qrImageUrl,
       bankName: this.vietQr.bankName,
-      bankBin,
-      accountNoMasked: maskAccountNo(accountNo),
-      accountName,
+      bankBin: bankBin ?? 'demo',
+      accountNoMasked: accountNo ? maskAccountNo(accountNo) : '****demo',
+      accountName: accountName ?? 'TAI KHOAN DEMO',
       amountVnd: order.amountVnd,
       transferContent,
       expiresAt: expiresAt.toISOString(),

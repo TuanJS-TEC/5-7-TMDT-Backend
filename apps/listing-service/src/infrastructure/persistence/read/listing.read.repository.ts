@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import {
+  isPubliclyVisible,
+  MODERATION_QUEUE_STATUSES,
+} from '../../../domain/listing-status.rules';
 import type { ListingRecord } from '../listing-record';
 import { ListingResponseDto } from '../../../presentation/dto/listing.response.dto';
 import type { ListingStatus, FuelType, TransmissionType } from '../../../domain/entities/listing.entity';
 import { ListingPackageType } from '../../../domain/entities/listing.entity';
 import { ListingOrmEntity } from '../typeorm/listing.orm.entity';
+import { normalizeListingImageUrls } from '../listing-image-url.util';
 
 @Injectable()
 export class ListingReadRepository {
@@ -22,7 +27,7 @@ export class ListingReadRepository {
       priceVnd: Number(r.priceVnd),
       sellerId: r.sellerId,
       packageType: r.packageType as ListingPackageType,
-      imageUrls: r.imageUrls ?? [],
+      imageUrls: normalizeListingImageUrls(r.id, r.imageUrls),
       carMake: r.carMake,
       carModel: r.carModel,
       carYear: r.carYear,
@@ -108,6 +113,50 @@ export class ListingReadRepository {
     return rows as unknown as ListingRecord[];
   }
 
+  /** UC32/UC33 — hàng đợi kiểm duyệt (pending + chờ seller sửa). */
+  async findModerationQueue(
+    page: number,
+    limit: number,
+    sortBy: string = 'createdAt',
+    sortOrder: 'asc' | 'desc' = 'desc',
+  ): Promise<{
+    items: ListingResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    let rows = await this.repo.find({
+      where: { status: In([...MODERATION_QUEUE_STATUSES]) },
+    });
+
+    rows.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+      if (sortBy === 'priceVnd') {
+        aValue = Number(a.priceVnd);
+        bValue = Number(b.priceVnd);
+      } else if (sortBy === 'carYear') {
+        aValue = a.carYear;
+        bValue = b.carYear;
+      } else {
+        aValue = (a as any)[sortBy]?.getTime
+          ? (a as any)[sortBy].getTime()
+          : (a as any)[sortBy];
+        bValue = (b as any)[sortBy]?.getTime
+          ? (b as any)[sortBy].getTime()
+          : (b as any)[sortBy];
+      }
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    const total = rows.length;
+    const start = (page - 1) * limit;
+    const items = rows.slice(start, start + limit).map((r) => this.toDto(r));
+    return { items, total, page, limit };
+  }
+
   async findMany(
     page: number,
     limit: number,
@@ -129,7 +178,11 @@ export class ListingReadRepository {
     let rows = await this.repo.find({
       where: { status: status as string },
     });
-    
+
+    if (status === 'approved') {
+      rows = rows.filter((x) => isPubliclyVisible(x.status, x.expiresAt));
+    }
+
     // Lọc theo search (keyword)
     if (search) {
       const lowerKeyword = search.toLowerCase();
@@ -219,6 +272,29 @@ export class ListingReadRepository {
     return { items, total, page, limit };
   }
 
+  /** Tin của seller đăng nhập — mọi trạng thái (trừ đã xóa mềm). */
+  async findBySellerOwner(
+    sellerId: string,
+    page: number,
+    limit: number,
+  ): Promise<{
+    items: ListingResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const rows = await this.repo.find({
+      where: { sellerId, isDeleted: false },
+    });
+    const total = rows.length;
+    const start = (page - 1) * limit;
+    const items = rows
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+      .slice(start, start + limit)
+      .map((r) => this.toDto(r));
+    return { items, total, page, limit };
+  }
+
   // Phương thức search mới cho UC2
   async search(
     keyword: string,
@@ -238,7 +314,7 @@ export class ListingReadRepository {
     // Lọc theo keyword trong title, carMake, carModel (mock logic)
     rows = rows.filter(
       (x) =>
-        x.status === 'approved' &&
+        isPubliclyVisible(x.status, x.expiresAt) &&
         (x.title.toLowerCase().includes(lowerCaseKeyword) ||
           x.carMake.toLowerCase().includes(lowerCaseKeyword) ||
           x.carModel.toLowerCase().includes(lowerCaseKeyword)),
@@ -302,7 +378,7 @@ export class ListingReadRepository {
     // Lọc theo tất cả các tiêu chí (mock logic)
     rows = rows.filter(
       (x) =>
-        x.status === 'approved' &&
+        isPubliclyVisible(x.status, x.expiresAt) &&
         Number(x.priceVnd) >= minPrice &&
         Number(x.priceVnd) <= maxPrice &&
         x.carYear >= minYear &&
