@@ -7,6 +7,8 @@ export const LISTING_EVENTS = {
   APPROVED: 'listing.approved',
   /** UC16 A1 — admin từ chối / huỷ bài đăng */
   REJECTED: 'listing.rejected',
+  /** UC33 — admin yêu cầu seller chỉnh sửa tin trước khi duyệt */
+  MODIFICATION_REQUESTED: 'listing.modification_requested',
   /** UC25 — showroom đánh dấu tin đã bán */
   SOLD: 'listing.sold',
   DELETED: 'listing.deleted',

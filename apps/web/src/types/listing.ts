@@ -15,6 +15,11 @@ export interface ListingDto {
   status: string;
   createdAt: string;
   updatedAt: string;
+  /** UC33 — chi tiết admin yêu cầu seller chỉnh sửa */
+  modificationRequestDetails?: string;
+  modificationRequestedBy?: string;
+  modificationRequestedAt?: string;
+  rejectionReason?: string;
 }
 
 export interface ListingListResult {

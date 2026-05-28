@@ -21,7 +21,7 @@ const TRANS_LABELS: Record<string, string> = {
   automatic: 'Tự động', manual: 'Số sàn', 'semi-automatic': 'Bán tự động',
 };
 
-const CAR_MAKES = ['', 'Toyota', 'Honda', 'Mazda', 'Hyundai', 'Kia', 'Ford', 'VinFast', 'Mercedes', 'BMW'];
+const DEFAULT_CAR_MAKES = ['Toyota', 'Honda', 'Mazda', 'Hyundai', 'Kia', 'Ford', 'VinFast', 'Mercedes', 'BMW'];
 const TRENDING_TAGS = ['EVs', 'SUV', 'Sedan', 'Hybrid', 'Under 700M', 'Family Car'];
 
 interface Filters {
@@ -31,6 +31,12 @@ interface Filters {
   minPrice: string;
   maxPrice: string;
   search: string;
+}
+
+interface CarMakeOption {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 function CarCardSkeleton() {
@@ -100,6 +106,7 @@ function CarCard({ listing }: { listing: ListingDto }) {
 
 export function HomePage() {
   const [items, setItems] = useState<ListingDto[]>([]);
+  const [carMakes, setCarMakes] = useState<string[]>(DEFAULT_CAR_MAKES);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +140,22 @@ export function HomePage() {
     }
   }
 
-  useEffect(() => { void fetchListings(filters); }, []);
+  async function fetchCarMakes() {
+    try {
+      const res = await api<{ items: CarMakeOption[] }>('/listings/car-makes');
+      const names = res.items.map((x) => x.name).filter(Boolean);
+      if (names.length > 0) {
+        setCarMakes(names);
+      }
+    } catch {
+      setCarMakes(DEFAULT_CAR_MAKES);
+    }
+  }
+
+  useEffect(() => {
+    void fetchListings(filters);
+    void fetchCarMakes();
+  }, []);
 
   function setFilter<K extends keyof Filters>(key: K, value: Filters[K]) {
     const next = { ...filters, [key]: value };
@@ -155,8 +177,8 @@ export function HomePage() {
               NỀN TẢNG CHO MUA BÁN XE
             </p>
             <h1 className="font-display text-4xl font-bold leading-tight text-ink md:text-6xl">
-              Tim xe phu hop
-              <span className="block text-brand-700">cho nhu cau cua ban</span>
+              Tìm xe phù hợp
+              <span className="block text-brand-700">cho nhu cầu của bạn</span>
             </h1>
             <p className="max-w-2xl text-base text-muted md:text-lg">
               INSPIRED BY CARWOW, BUT BETTER.
@@ -175,11 +197,11 @@ export function HomePage() {
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-brand-100 bg-white p-3">
                 <p className="text-xs text-muted">ĐÁNH GIÁ</p>
-                <p className="font-display text-lg font-bold text-ink">Excellent</p>
+                <p className="font-display text-lg font-bold text-ink">EXCELLENT</p>
               </div>
               <div className="rounded-2xl border border-brand-100 bg-white p-3">
                 <p className="text-xs text-muted">NGƯỜI BÁN</p>
-                <p className="font-display text-lg font-bold text-ink">Da xac minh</p>
+                <p className="font-display text-lg font-bold text-ink">ĐÃ XÁC MINH</p>
               </div>
               <div className="rounded-2xl border border-brand-100 bg-white p-3">
                 <p className="text-xs text-muted">THANH TOÁN</p>
@@ -204,7 +226,7 @@ export function HomePage() {
                 onChange={(e) => setFilter('make', e.target.value)}
               >
                 <option value="">Chon hang xe</option>
-                {CAR_MAKES.slice(1).map((m) => <option key={m} value={m}>{m}</option>)}
+                {carMakes.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
               <button
                 type="button"
@@ -221,7 +243,7 @@ export function HomePage() {
       <section className="space-y-4">
         <h2 className="font-display text-2xl font-bold text-ink">THƯƠNG HIỆU ĐƯỢC TÌM NHIỀU</h2>
         <div className="flex flex-wrap gap-3">
-          {CAR_MAKES.slice(1).map((m) => (
+          {carMakes.map((m) => (
             <button
               key={m}
               className={`px-5 py-3 rounded-xl border font-semibold transition-all ${

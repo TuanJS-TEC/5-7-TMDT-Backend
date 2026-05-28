@@ -432,6 +432,7 @@ Hiện **chưa triển khai** logic tìm kiếm — chỉ NestJS starter. Tìm k
 | `listing.created` | Tin mới tạo |
 | `listing.approved` | Đã duyệt |
 | `listing.rejected` | UC16 A1 — từ chối |
+| `listing.modification_requested` | UC33 — yêu cầu seller chỉnh sửa |
 | `listing.deleted` | Xóa |
 | `listing.image.*` | UC17 — AI/manual review ảnh |
 
@@ -459,6 +460,7 @@ Hiện **chưa triển khai** logic tìm kiếm — chỉ NestJS starter. Tìm k
 | `/favorites` | FavoritesPage | JWT |
 | `/seller/orders` | SellerOrdersPage | seller |
 | `/seller/listing/new` | CreateListingPage | seller |
+| `/seller/listing/:id/edit` | EditListingPage | seller |
 | `/admin/moderation` | AdminModerationPage | admin |
 | `/admin/dashboard` | AdminRevenueDashboardPage | admin |
 

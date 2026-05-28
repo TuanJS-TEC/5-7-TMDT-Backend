@@ -1,3 +1,12 @@
+/** UC33 — payload queue `listing.modification_requested` */
+export type ListingModificationRequestedPayload = {
+  listingId: string;
+  sellerId: string;
+  moderatorId: string;
+  details: string;
+  requestedAt: string;
+};
+
 /** UC25 — payload queue `listing.sold` (listing-service → notification-service) */
 export type ListingSoldPayload = {
   listingId: string;

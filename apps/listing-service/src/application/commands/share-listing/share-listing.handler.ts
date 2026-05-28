@@ -29,6 +29,7 @@ export class ShareListingHandler implements ICommandHandler<ShareListingCommand>
     // Ở đây có thể tạo ra URL chia sẻ thực tế dựa trên FE domain.
     // Ví dụ: https://carmarket.vn/listings/123
     const shareUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/listings/${command.listingId}`;
+    // const shareUrl 
     
     return shareUrl;
   }

@@ -7,8 +7,13 @@ import {
   SellerWarningDispatcher,
   type SellerWarningDispatchResult,
 } from '../application/seller-warning.dispatcher';
+import {
+  ListingModificationRequestedDispatcher,
+  type ListingModificationDispatchResult,
+} from '../application/listing-modification-requested.dispatcher';
 import { AccountLockedRequestDto } from './dto/account-locked.dto';
 import { SellerWarningRequestDto } from './dto/seller-warning.dto';
+import { ListingModificationRequestedRequestDto } from './dto/listing-modification-requested.dto';
 
 /**
  * UC60 — HTTP API nội bộ: các use case khác (UC36, …) gọi để gửi thông báo.
@@ -18,6 +23,7 @@ export class NotificationsController {
   constructor(
     private readonly sellerWarningDispatcher: SellerWarningDispatcher,
     private readonly accountLockedDispatcher: AccountLockedDispatcher,
+    private readonly listingModificationDispatcher: ListingModificationRequestedDispatcher,
   ) {}
 
   /**
@@ -35,6 +41,24 @@ export class NotificationsController {
       title: dto.title,
       body: dto.body,
     });
+    return { data };
+  }
+
+  /**
+   * UC33 — thông báo seller khi admin yêu cầu chỉnh sửa tin (UC60).
+   */
+  @Post('listing-modification-requested')
+  @HttpCode(HttpStatus.OK)
+  async sendListingModificationRequested(
+    @Body() dto: ListingModificationRequestedRequestDto,
+  ): Promise<{ data: ListingModificationDispatchResult }> {
+    const data =
+      await this.listingModificationDispatcher.dispatchModificationRequested({
+        recipientUserId: dto.recipientUserId,
+        listingId: dto.listingId,
+        details: dto.details,
+        requestedAt: dto.requestedAt,
+      });
     return { data };
   }
 

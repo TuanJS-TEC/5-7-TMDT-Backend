@@ -71,6 +71,8 @@ export function SellerMyListingsPage() {
 
   const canMarkSold = (status: string) => status === 'approved';
   const canDelete = (status: string) => !['sold', 'removed'].includes(status);
+  const canEdit = (status: string) =>
+    ['pending', 'draft', 'modification_requested', 'rejected', 'approved'].includes(status);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -146,6 +148,19 @@ export function SellerMyListingsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
+                        {row.status === 'modification_requested' && row.modificationRequestDetails && (
+                          <p className="w-full text-xs text-amber-800 mb-1 line-clamp-2" title={row.modificationRequestDetails}>
+                            Admin yêu cầu: {row.modificationRequestDetails}
+                          </p>
+                        )}
+                        {canEdit(row.status) && (
+                          <Link
+                            to={`/seller/listing/${row.id}/edit`}
+                            className="btn btn-primary py-1.5 px-3 text-xs"
+                          >
+                            {row.status === 'modification_requested' ? 'Sửa theo yêu cầu' : 'Chỉnh sửa'}
+                          </Link>
+                        )}
                         {row.status === 'approved' && (
                           <Link
                             to={`/seller/orders?listingId=${encodeURIComponent(row.id)}`}

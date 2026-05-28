@@ -111,6 +111,7 @@ export function Shell() {
                   <>
                     <NavLink to="/admin/dashboard" className={({ isActive }) => navLinkClass(isActive, true)}>Revenue</NavLink>
                     <NavLink to="/admin/moderation" className={({ isActive }) => navLinkClass(isActive, true)}>Moderation</NavLink>
+                    <NavLink to="/admin/car-makes" className={({ isActive }) => navLinkClass(isActive, true)}>Car makes</NavLink>
                     <NavLink to="/admin/sold" className={({ isActive }) => navLinkClass(isActive, true)}>Đã bán</NavLink>
                   </>
                 )}
@@ -179,6 +180,7 @@ export function Shell() {
                     <>
                       <NavLink to="/admin/dashboard" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Revenue</NavLink>
                       <NavLink to="/admin/moderation" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Moderation</NavLink>
+                      <NavLink to="/admin/car-makes" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Car makes</NavLink>
                       <NavLink to="/admin/sold" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Đã bán</NavLink>
                     </>
                   )}

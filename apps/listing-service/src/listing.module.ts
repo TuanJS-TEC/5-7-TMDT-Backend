@@ -75,6 +75,9 @@ import { ListingAuthModule } from './auth/listing-auth.module';
 import { ListingImageController } from './presentation/controllers/listing-image.controller';
 import { ListingImageService } from './application/listing-image/listing-image.service';
 import { AiImageValidationClient } from './infrastructure/ai/ai-image-validation.client';
+import { CarMakeOrmEntity } from './infrastructure/persistence/typeorm/car-make.orm.entity';
+import { CarMakeReadRepository } from './infrastructure/persistence/read/car-make.read.repository';
+import { CarMakeSeedService } from './infrastructure/persistence/car-make.seed.service';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -125,7 +128,7 @@ const eventHandlers = [
 const typeOrmListing =
   process.env.SKIP_DATABASE === 'true'
     ? []
-    : [TypeOrmModule.forFeature([ListingOrmEntity, FavoriteOrmEntity, ReportOrmEntity])];
+    : [TypeOrmModule.forFeature([ListingOrmEntity, FavoriteOrmEntity, ReportOrmEntity, CarMakeOrmEntity])];
 
 @Module({
   // imports: [CqrsModule, ...typeOrmListing],
@@ -152,6 +155,8 @@ const typeOrmListing =
     ReportWriteRepository,
     FavoriteReadRepository,
     FavoriteWriteRepository,
+    CarMakeReadRepository,
+    CarMakeSeedService,
     RabbitMqPublisher,
     PaymentPackagePaidConsumer,
     PaymentRefundCompletedConsumer,
