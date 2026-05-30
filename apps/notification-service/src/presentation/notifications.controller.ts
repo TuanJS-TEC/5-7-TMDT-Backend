@@ -14,6 +14,8 @@ import {
 import { AccountLockedRequestDto } from './dto/account-locked.dto';
 import { SellerWarningRequestDto } from './dto/seller-warning.dto';
 import { ListingModificationRequestedRequestDto } from './dto/listing-modification-requested.dto';
+import { RegisterDeviceDto } from './dto/register-device.dto';
+import { DeviceTokenRegistry } from '../application/device-token.registry';
 
 /**
  * UC60 — HTTP API nội bộ: các use case khác (UC36, …) gọi để gửi thông báo.
@@ -24,7 +26,21 @@ export class NotificationsController {
     private readonly sellerWarningDispatcher: SellerWarningDispatcher,
     private readonly accountLockedDispatcher: AccountLockedDispatcher,
     private readonly listingModificationDispatcher: ListingModificationRequestedDispatcher,
+    private readonly deviceRegistry: DeviceTokenRegistry,
   ) {}
+
+  /** Mobile — đăng ký FCM/APNs device token (mock registry, chưa gửi push thật) */
+  @Post('devices/register')
+  @HttpCode(HttpStatus.OK)
+  registerDevice(@Body() dto: RegisterDeviceDto) {
+    const data = this.deviceRegistry.register({
+      userId: dto.userId,
+      token: dto.token,
+      platform: dto.platform,
+      registeredAt: new Date().toISOString(),
+    });
+    return { data };
+  }
 
   /**
    * UC36 — gửi cảnh báo chính thức tới người bán (Email / In-app / SMS theo cấu hình).

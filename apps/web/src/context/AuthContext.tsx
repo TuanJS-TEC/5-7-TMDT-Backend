@@ -8,25 +8,9 @@ import {
 } from 'react';
 import { api } from '../api/client';
 
-export type UserRole = 'buyer' | 'seller' | 'admin';
+import type { AuthSession, SessionUser, UserRole } from '@car-marketplace/api-contract';
 
-export interface SessionUser {
-  id: string;
-  phone: string;
-  role: UserRole;
-  fullName: string;
-  accountType: string;
-  freeListingCredits: number;
-}
-
-interface AuthSession {
-  accessToken: string;
-  tokenType: 'Bearer';
-  expiresIn: number;
-  user: SessionUser;
-  redirectPath?: string;
-  welcomeMessage?: string;
-}
+export type { UserRole, SessionUser };
 
 interface AuthContextValue {
   user: SessionUser | null;

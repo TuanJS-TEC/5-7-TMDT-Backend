@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { OpenApiController } from './openapi.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 
@@ -16,7 +17,7 @@ import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
       ignoreEnvFile: process.env.NODE_ENV === 'production',
     }),
   ],
-  controllers: [AppController],
+  controllers: [AppController, OpenApiController],
   providers: [AppService],
 })
 // export class AppModule {}
@@ -82,6 +83,30 @@ export class AppModule implements NestModule { // Thực hiện NestModule
         },
       );
 
+    // Seller profile (UC15) — mounted at /api/v1/profile on auth-service
+    consumer
+      .apply(
+        createProxyMiddleware({
+          target: authServiceUrl,
+          changeOrigin: true,
+          on: {
+            proxyReq: fixRequestBody,
+          },
+        }),
+      )
+      .forRoutes(
+        {
+          path: 'profile',
+          method: RequestMethod.ALL,
+          version: '1',
+        },
+        {
+          path: 'profile/*path',
+          method: RequestMethod.ALL,
+          version: '1',
+        },
+      );
+
     const paymentServiceUrl =
       this.configService.get<string>('PAYMENT_SERVICE_URL') ??
       'http://localhost:3004';
@@ -128,6 +153,60 @@ export class AppModule implements NestModule { // Thực hiện NestModule
         },
         {
           path: 'payment/*path',
+          method: RequestMethod.ALL,
+          version: '1',
+        },
+      );
+
+    const notificationServiceUrl =
+      this.configService.get<string>('NOTIFICATION_SERVICE_URL') ??
+      'http://localhost:3007';
+
+    consumer
+      .apply(
+        createProxyMiddleware({
+          target: notificationServiceUrl,
+          changeOrigin: true,
+          on: {
+            proxyReq: fixRequestBody,
+          },
+        }),
+      )
+      .forRoutes(
+        {
+          path: 'notifications',
+          method: RequestMethod.ALL,
+          version: '1',
+        },
+        {
+          path: 'notifications/*path',
+          method: RequestMethod.ALL,
+          version: '1',
+        },
+      );
+
+    const userServiceUrl =
+      this.configService.get<string>('USER_SERVICE_URL') ??
+      'http://localhost:3005';
+
+    consumer
+      .apply(
+        createProxyMiddleware({
+          target: userServiceUrl,
+          changeOrigin: true,
+          on: {
+            proxyReq: fixRequestBody,
+          },
+        }),
+      )
+      .forRoutes(
+        {
+          path: 'identity-verification',
+          method: RequestMethod.ALL,
+          version: '1',
+        },
+        {
+          path: 'identity-verification/*path',
           method: RequestMethod.ALL,
           version: '1',
         },

@@ -16,6 +16,8 @@ import { VerifyPhoneOtpDto } from '../otp/dto/verify-phone-otp.dto';
 import { PhoneOtpFacadeService } from '../otp/phone-otp.facade.service';
 import { PasswordResetService } from '../password-reset/password-reset.service';
 import { PasswordResetCompleteDto } from '../password-reset/dto/password-reset-complete.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { RefreshTokenService } from './refresh-token.service';
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -24,6 +26,7 @@ export class AuthController {
     private readonly registerService: RegisterService,
     private readonly phoneOtpFacade: PhoneOtpFacadeService,
     private readonly passwordReset: PasswordResetService,
+    private readonly refreshTokens: RefreshTokenService,
   ) {}
 
   @Post('login')
@@ -88,5 +91,15 @@ export class AuthController {
       dto.passwordResetToken,
       dto.newPassword,
     );
+  }
+
+  /** Mobile — đổi access token bằng refresh token */
+  @Post('refresh')
+  @HttpCode(200)
+  refresh(
+    @Body() dto: RefreshTokenDto,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.refreshTokens.refreshSession(dto.refreshToken, userAgent ?? '');
   }
 }

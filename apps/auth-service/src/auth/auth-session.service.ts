@@ -23,6 +23,7 @@ export interface AuthSessionResponse {
   user: AuthSessionUserPayload;
   redirectPath: string;
   welcomeMessage?: string;
+  refreshToken?: string;
 }
 
 @Injectable()

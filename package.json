@@ -8,7 +8,7 @@
     "libs/*"
   ],
   "scripts": {
-    "build:libs": "npm run build -w @car-marketplace/common -w @car-marketplace/database -w @car-marketplace/messaging",
+    "build:libs": "npm run build -w @car-marketplace/common -w @car-marketplace/database -w @car-marketplace/messaging -w @car-marketplace/api-contract",
     "build:apps": "npm run build -w api-gateway -w auth-service -w listing-service -w payment-service -w user-service -w notification-service -w admin-service -w search-service",
     "build": "npm run build:libs && npm run build:apps",
     "build:gateway": "npm run build -w api-gateway",
@@ -18,6 +18,8 @@
     "start:auth": "npm run start:dev -w auth-service",
     "start:user": "npm run start:dev -w user-service",
     "start:web": "npm run dev -w web",
+    "start:mobile": "npm run start -w mobile",
+    "build:mobile": "npm run build -w mobile",
     "docker:stack:up": "docker compose -f docker-compose.stack.yml up --build",
     "docker:stack:down": "docker compose -f docker-compose.stack.yml down",
     "docker:stack:build": "docker compose -f docker-compose.stack.yml build"
