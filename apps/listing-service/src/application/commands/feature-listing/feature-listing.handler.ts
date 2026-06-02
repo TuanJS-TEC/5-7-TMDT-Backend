@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { isPubliclyVisible } from '../../../domain/listing-status.rules';
 import { FeatureListingCommand } from './feature-listing.command';
 import { ListingWriteRepository } from '../../../infrastructure/persistence/write/listing.write.repository';
 import { ListingReadRepository } from '../../../infrastructure/persistence/read/listing.read.repository';
@@ -15,6 +16,11 @@ export class FeatureListingHandler implements ICommandHandler<FeatureListingComm
     const listing = await this.readRepo.findById(command.listingId);
     if (!listing) {
       throw new NotFoundException(`Listing with ID ${command.listingId} not found`);
+    }
+    if (!isPubliclyVisible(listing.status, listing.expiresAt)) {
+      throw new BadRequestException(
+        'Chi ghim tin khi dang hien thi cong khai (approved, chua het han).',
+      );
     }
 
     await this.writeRepo.featureListing(command.listingId, command.days);

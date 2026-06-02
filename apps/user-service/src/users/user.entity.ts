@@ -22,4 +22,13 @@ export class UserEntity extends BaseEntity {
   /** Lượt đăng tin FREE (UC Opt: người bán +3 khi đăng ký) */
   @Column({ type: 'int', default: 0 })
   freePostCredits!: number;
+
+  @Column({ type: 'boolean', default: false })
+  canSell!: boolean;
+
+  @Column({ type: 'varchar', length: 32, default: 'none' })
+  verificationStatus!: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  latestRequestId?: string | null;
 }

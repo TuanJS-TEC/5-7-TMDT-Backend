@@ -22,7 +22,10 @@ import { SellerGuard } from '@car-marketplace/common';
 import { SmsNotificationService } from './sms-notification.service';
 import { AdminAccountService } from '../internal/admin-account.service';
 import { InternalApiKeyGuard } from '../internal/internal-api-key.guard';
+import { InternalPublicProfileService } from '../internal/internal-public-profile.service';
 import { InternalUsersController } from '../internal/internal-users.controller';
+import { SuperadminBootstrapService } from './superadmin-bootstrap.service';
+import { RefreshTokenService } from './refresh-token.service';
 
 const typeOrmAuth =
   process.env.SKIP_DATABASE === 'true'
@@ -40,7 +43,11 @@ const internalUc37 =
     ? { controllers: [] as const, providers: [] as const }
     : {
         controllers: [InternalUsersController],
-        providers: [AdminAccountService, InternalApiKeyGuard],
+        providers: [
+          AdminAccountService,
+          InternalPublicProfileService,
+          InternalApiKeyGuard,
+        ],
       };
 
 @Module({
@@ -61,6 +68,7 @@ const internalUc37 =
   controllers: [AuthController, ProfileController, ...internalUc37.controllers],
   providers: [
     AuthSessionService,
+    RefreshTokenService,
     LoginService,
     RegisterService,
     SmsNotificationService,
@@ -71,6 +79,7 @@ const internalUc37 =
     JwtAuthGuard,
     SellerGuard,
     ProfileService,
+    SuperadminBootstrapService,
     ...internalUc37.providers,
   ],
 })

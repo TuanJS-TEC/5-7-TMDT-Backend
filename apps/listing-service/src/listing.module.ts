@@ -21,8 +21,7 @@ import { ListingModificationRequestedHandler } from './application/events/listin
 import { ListingWriteRepository } from './infrastructure/persistence/write/listing.write.repository';
 import { ListingReadRepository } from './infrastructure/persistence/read/listing.read.repository';
 import { RabbitMqPublisher } from './infrastructure/messaging/rabbitmq.publisher';
-import { FAVORITE_STORE, LISTING_STORE } from './infrastructure/persistence/listing.store.token';
-import type { ListingRecord } from './infrastructure/persistence/listing-record';
+import { FavoriteOrmEntity } from './infrastructure/persistence/typeorm/favorite.orm.entity';
 import { SearchListingsHandler } from './application/queries/search-listings/search-listings.handler';
 import { FilterListingsHandler } from './application/queries/filter-listings/filter-listings.handler';
 import { GetListingPackagesHandler } from './application/queries/get-listing-packages/get-listing-packages.handler';
@@ -33,8 +32,8 @@ import { PushListingHandler } from './application/commands/push-listing/push-lis
 import { FeatureListingHandler } from './application/commands/feature-listing/feature-listing.handler';
 import { ReportReadRepository } from './infrastructure/persistence/read/report.read.repository';
 import { ReportWriteRepository } from './infrastructure/persistence/write/report.write.repository';
-import { REPORT_STORE } from './infrastructure/persistence/report.store.token';
 import { ReportRecord } from './infrastructure/persistence/report-record';
+import { ReportOrmEntity } from './infrastructure/persistence/typeorm/report.orm.entity';
 import { ProfileService } from './infrastructure/auth/profile.service';
 import { CompareListingsHandler } from './application/queries/compare-listings/compare-listings.handler';
 import { GetListingStatsHandler } from './application/queries/get-listing-stats/get-listing-stats.handler';
@@ -61,9 +60,9 @@ import { Uc38RemovalAuditReadRepository } from './infrastructure/persistence/rea
 import { Uc38RemovalAuditWriteRepository } from './infrastructure/persistence/write/uc38-removal-audit.write.repository';
 import { MarkListingSoldCommand } from './application/commands/mark-listing-sold/mark-listing-sold.command';
 import { MarkListingSoldHandler } from './application/commands/mark-listing-sold/mark-listing-sold.handler';
-import { ListingSoldEvent } from './application/events/listing-sold/listing-sold.event';
-import { ListingDeletedEvent } from './application/events/listing-deleted/listing-deleted.event';
-// import { ListingSoldEventHandler } from './application/events/listing-sold/listing-sold.handler';
+import { ListingSoldEventHandler } from './application/events/listing-sold/listing-sold.handler';
+import { GetMyListingsHandler } from './application/queries/get-my-listings/get-my-listings.handler';
+import { GetAdminSoldListingsHandler } from './application/queries/get-admin-sold-listings/get-admin-sold-listings.handler';
 import { RenewListingCommand } from './application/commands/renew-listing/renew-listing.command';
 import { RenewListingHandler } from './application/commands/renew-listing/renew-listing.handler';
 import { RenewListingDto } from './presentation/dto/renew-listing.dto';
@@ -72,6 +71,13 @@ import { PaymentServiceHttpClient } from './infrastructure/payment/payment-servi
 import { ListingExpirationService } from './application/services/listing-expiration.service';
 import { ListingExpirationNotificationService } from './application/services/listing-expiration-notification.service';
 import { ListingExpirationCron } from './infrastructure/scheduling/listing-expiration.cron';
+import { ListingAuthModule } from './auth/listing-auth.module';
+import { ListingImageController } from './presentation/controllers/listing-image.controller';
+import { ListingImageService } from './application/listing-image/listing-image.service';
+import { AiImageValidationClient } from './infrastructure/ai/ai-image-validation.client';
+import { CarMakeOrmEntity } from './infrastructure/persistence/typeorm/car-make.orm.entity';
+import { CarMakeReadRepository } from './infrastructure/persistence/read/car-make.read.repository';
+import { CarMakeSeedService } from './infrastructure/persistence/car-make.seed.service';
 
 const commandHandlers = [
   CreateListingHandler,
@@ -105,6 +111,8 @@ const queryHandlers = [
   GetListingStatsHandler,
   /** UC20 — Xem thống kê tin đăng */
   GetListingStatisticsHandler,
+  GetMyListingsHandler,
+  GetAdminSoldListingsHandler,
 ];
 const eventHandlers = [
   ListingCreatedHandler,
@@ -113,51 +121,26 @@ const eventHandlers = [
   ListingRejectedHandler,
   /** UC33 — publish listing.modification_requested event → notification-service */
   ListingModificationRequestedHandler,
-  ListingSoldEvent,
-  ListingDeletedEvent,
-  ListingRenewedEvent,
-  // ListingSoldEventHandler,
+  /** UC25 — publish listing.sold → notification-service */
+  ListingSoldEventHandler,
 ];
-
-let createMockListingStore: any = () => new Map();
-let createMockFavoriteStore: any = () => new Map();
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mockListing = require('./infrastructure/persistence/mock-listing.store');
-  createMockListingStore = mockListing.createMockListingStore || createMockListingStore;
-  createMockFavoriteStore = mockListing.createMockFavoriteStore || createMockFavoriteStore;
-} catch (e) { }
-
-let createMockReportStore: any = () => new Map();
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mockReport = require('./infrastructure/persistence/mock-report.store');
-  createMockReportStore = mockReport.createMockReportStore || createMockReportStore;
-} catch (e) { }
 
 const typeOrmListing =
   process.env.SKIP_DATABASE === 'true'
     ? []
-    : [TypeOrmModule.forFeature([ListingOrmEntity])];
+    : [TypeOrmModule.forFeature([ListingOrmEntity, FavoriteOrmEntity, ReportOrmEntity, CarMakeOrmEntity])];
 
 @Module({
   // imports: [CqrsModule, ...typeOrmListing],
   imports: [
     CqrsModule,
+    ListingAuthModule,
     ConfigModule, // Cần ConfigModule để ProfileService đọc biến môi trường
     HttpModule, // Cần HttpModule để ProfileService có thể gọi HTTP request
     ...typeOrmListing,
   ],
-  controllers: [ListingController],
+  controllers: [ListingController, ListingImageController],
   providers: [
-    {
-      provide: LISTING_STORE,
-      useFactory: createMockListingStore,
-    },
-    {
-      provide: REPORT_STORE,
-      useFactory: createMockReportStore,
-    },
     {
       provide: SELLER_WARNING_STORE,
       useFactory: () => new Map(),
@@ -170,12 +153,10 @@ const typeOrmListing =
     ListingReadRepository,
     ReportReadRepository,
     ReportWriteRepository,
-    {
-      provide: FAVORITE_STORE,
-      useFactory: createMockFavoriteStore,
-    },
     FavoriteReadRepository,
     FavoriteWriteRepository,
+    CarMakeReadRepository,
+    CarMakeSeedService,
     RabbitMqPublisher,
     PaymentPackagePaidConsumer,
     PaymentRefundCompletedConsumer,
@@ -195,6 +176,8 @@ const typeOrmListing =
     ListingExpirationService,
     ListingExpirationNotificationService,
     ListingExpirationCron,
+    ListingImageService,
+    AiImageValidationClient,
     ...commandHandlers,
     ...queryHandlers,
     ...eventHandlers,

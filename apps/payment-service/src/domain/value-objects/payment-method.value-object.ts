@@ -60,7 +60,7 @@ export const PAYMENT_METHODS: PaymentMethodInfo[] = [
     type: 'qr_banking',
     name: 'QR Banking (VietQR)',
     description: 'Quét mã VietQR bằng app ngân hàng để thanh toán',
-    iconUrl: 'https://vietqr.net/img/vietqr-logo.svg',
+    iconUrl: '/assets/vietqr/payment-qr.png',
     isActive: true,
   },
   {

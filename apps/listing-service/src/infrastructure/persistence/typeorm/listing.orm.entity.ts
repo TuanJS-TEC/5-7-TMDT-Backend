@@ -51,10 +51,67 @@ export class ListingOrmEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 32 })
   status!: string;
 
+  @Column({ type: 'int', default: 0 })
+  shareCount!: number;
+
+  @Column({ type: 'int', default: 0 })
+  viewCount!: number;
+
+  @Column({ type: 'int', default: 0 })
+  favoriteCount!: number;
+
+  @Column({ type: 'int', default: 0 })
+  contactCount!: number;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  pushedAt?: Date | null;
+
+  @Column({ type: 'boolean', default: false })
+  isFeatured!: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  featuredUntil?: Date | null;
+
   @Column({ type: 'timestamptz', nullable: true })
   approvedAt?: Date | null;
 
   /** UC16 A1 — lý do từ chối từ admin */
   @Column({ type: 'text', nullable: true })
   rejectionReason?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  modificationRequestDetails?: string | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  modificationRequestedBy?: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  modificationRequestedAt?: Date | null;
+
+  @Column({ type: 'int', default: 0 })
+  imageAiFailureCount!: number;
+
+  @Column({ type: 'boolean', default: false })
+  manualImageReviewRequested!: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  pendingManualReviewImageUrl?: string | null;
+
+  @Column({ type: 'varchar', length: 64, default: 'none' })
+  imageModerationState!: string;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  removedAt?: Date | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  removedBy?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  adminRemovalReason?: string | null;
+
+  @Column({ type: 'timestamptz' })
+  expiresAt!: Date;
+
+  @Column({ type: 'boolean', default: false })
+  isDeleted!: boolean;
 }

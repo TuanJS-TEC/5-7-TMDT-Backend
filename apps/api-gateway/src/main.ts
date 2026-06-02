@@ -2,10 +2,33 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { VersioningType } from '@nestjs/common';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import type { Request, Response } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  const listingServiceUrl =
+    process.env.LISTING_SERVICE_URL ?? 'http://localhost:3002';
+  const authServiceUrl =
+    process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001';
+
+  // Ảnh upload nằm ngoài prefix /api — proxy trực tiếp ở Express (Nest middleware bị gắn /api)
+  app.use(
+    createProxyMiddleware({
+      target: listingServiceUrl,
+      changeOrigin: true,
+      pathFilter: '/uploads/listings',
+    }),
+  );
+  app.use(
+    createProxyMiddleware({
+      target: authServiceUrl,
+      changeOrigin: true,
+      pathFilter: '/uploads/avatars',
+    }),
+  );
+
   // Thêm global prefix và versioning
   app.setGlobalPrefix('api'); // Tất cả các route sẽ bắt đầu với /api
   app.enableVersioning({
@@ -28,7 +51,8 @@ async function bootstrap() {
     });
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = Number(process.env.PORT ?? 3000);
+  await app.listen(port, '0.0.0.0');
   console.log(`API Gateway is running on: ${await app.getUrl()}`);
 }
 bootstrap();

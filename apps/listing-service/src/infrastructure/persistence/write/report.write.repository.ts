@@ -1,27 +1,37 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { REPORT_STORE } from '../report.store.token';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ReportRecord } from '../report-record';
+import { ReportOrmEntity } from '../typeorm/report.orm.entity';
 
 @Injectable()
 export class ReportWriteRepository {
   constructor(
-    @Inject(REPORT_STORE)
-    private readonly store: Map<string, ReportRecord>,
+    @InjectRepository(ReportOrmEntity)
+    private readonly repo: Repository<ReportOrmEntity>,
   ) {}
 
   async create(record: ReportRecord): Promise<void> {
-    this.store.set(record.id, record);
+    const entity = this.repo.create({
+      ...record,
+      processedAt: record.processedAt ? new Date(record.processedAt) : null,
+    });
+    await this.repo.save(entity);
   }
 
   async update(id: string, patch: Partial<ReportRecord>): Promise<void> {
-    const existing = this.store.get(id);
+    const existing = await this.repo.findOneBy({ id } as any);
     if (!existing) {
       return;
     }
 
-    this.store.set(id, {
+    const updated = {
       ...existing,
       ...patch,
-    });
+      processedAt: patch.processedAt
+        ? new Date(patch.processedAt)
+        : existing.processedAt,
+    } as ReportOrmEntity;
+    await this.repo.save(updated);
   }
 }

@@ -1,12 +1,10 @@
-import { BaseIntegrationEvent } from '@car-marketplace/common';
+import { IEvent } from '@nestjs/cqrs';
 
-export class ListingSoldEvent extends BaseIntegrationEvent {
-  readonly eventName = 'listing.sold';
-
+export class ListingSoldEvent implements IEvent {
   constructor(
     public readonly listingId: string,
     public readonly sellerId: string,
-  ) {
-    super();
-  }
+    public readonly title: string,
+    public readonly soldAt: Date,
+  ) {}
 }

@@ -1,7 +1,13 @@
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { RenewListingCommand } from './renew-listing.command';
 import { ListingWriteRepository } from '../../../infrastructure/persistence/write/listing.write.repository';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
+import { RENEWABLE_STATUSES } from '../../../domain/listing-status.rules';
+import type { ListingStatus } from '../../../domain/entities/listing.entity';
 import { PaymentServiceHttpClient } from '../../../infrastructure/payment/payment-service-http.client';
 import { ListingRenewedEvent } from '../../events/listing-renewed/listing-renewed.event';
 
@@ -21,6 +27,11 @@ export class RenewListingHandler implements ICommandHandler<RenewListingCommand>
     }
     if (listing.sellerId !== command.sellerId) {
       throw new ForbiddenException('Bạn không có quyền gia hạn tin đăng này.');
+    }
+    if (!RENEWABLE_STATUSES.includes(listing.status as ListingStatus)) {
+      throw new BadRequestException(
+        `Chi gia han tin o trang thai approved hoac expired (hien tai: ${listing.status}).`,
+      );
     }
     // Trong thực tế, cần kiểm tra trạng thái của paymentOrderId từ Payment Service
     const paymentStatus = await this.paymentService.getPaymentOrderStatus(command.paymentOrderId, command.sellerId);

@@ -1,0 +1,15 @@
+export const colors = {
+  brand50: '#eff6ff',
+  brand100: '#dbeafe',
+  brand600: '#2563eb',
+  brand700: '#1d4ed8',
+  brand800: '#1e3a5f',
+  brand900: '#172554',
+  ink: '#0f172a',
+  muted: '#64748b',
+  surface: '#ffffff',
+  border: '#e2e8f0',
+  danger: '#dc2626',
+  success: '#16a34a',
+  warning: '#d97706',
+};

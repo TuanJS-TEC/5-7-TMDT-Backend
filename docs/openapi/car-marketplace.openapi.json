@@ -1,0 +1,67 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Car Marketplace API",
+    "version": "1.0.0",
+    "description": "REST API via API Gateway at /api/v1"
+  },
+  "servers": [{ "url": "http://localhost:3000/api/v1" }],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "summary": "Login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Refresh access token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/search": {
+      "get": { "summary": "Search listings" }
+    },
+    "/listings/{id}": {
+      "get": { "summary": "Listing detail" }
+    },
+    "/profile/seller": {
+      "get": { "summary": "Seller profile" }
+    },
+    "/notifications/devices/register": {
+      "post": { "summary": "Register push device token" }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

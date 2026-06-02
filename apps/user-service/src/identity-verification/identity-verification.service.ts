@@ -3,9 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { IdentityVerificationMockStore } from './identity-verification.mock-store';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import type {
-  MockUser,
   VerificationRequest,
   VerificationStatus,
 } from './identity-verification.types';
@@ -14,54 +14,57 @@ import type {
   ApproveIdentityVerificationDto,
   RejectIdentityVerificationDto,
 } from './dto/review-identity-verification.dto';
+import { UserEntity } from '../users/user.entity';
+import { IdentityVerificationRequestEntity } from './identity-verification-request.entity';
 
 @Injectable()
 export class IdentityVerificationService {
-  constructor(private readonly store: IdentityVerificationMockStore) { }
+  constructor(
+    @InjectRepository(UserEntity)
+    private readonly users: Repository<UserEntity>,
+    @InjectRepository(IdentityVerificationRequestEntity)
+    private readonly requests: Repository<IdentityVerificationRequestEntity>,
+  ) {}
 
-  submitRequest(dto: SubmitIdentityVerificationDto) {
-    const user = this.store.users.get(dto.userId);
+  async submitRequest(dto: SubmitIdentityVerificationDto) {
+    const user = await this.users.findOneBy({ id: dto.userId } as any);
     if (!user) {
-      throw new NotFoundException('Khong tim thay nguoi dung trong mock data');
+      throw new NotFoundException('User not found');
     }
 
     if (!dto.idImageUrl || !dto.idImageUrl.trim()) {
       throw new BadRequestException('idImageUrl la bat buoc');
     }
 
-    const requestId = this.store.nextRequestId();
-
-    const request: VerificationRequest = {
-      id: requestId,
+    const request = this.requests.create({
       userId: dto.userId,
       documentType: dto.documentType ?? 'cccd',
       idImageUrl: dto.idImageUrl.trim(),
-      aiCheckStatus: this.mockAiCheck(),
+      aiCheckStatus: this.defaultAiCheckStatus(),
       status: 'pending_admin_review',
-      submittedAt: new Date().toISOString(),
-    };
-
-    this.store.requests.set(requestId, request);
-    this.updateUserStatusAfterSubmit(user, requestId);
+    });
+    const saved = await this.requests.save(request);
+    await this.updateUserStatusAfterSubmit(user, saved.id);
 
     return {
-      message: 'Da tiep nhan yeu cau xac thuc CCCD/CMND',
-      data: request,
+      message: 'Identity verification request received',
+      data: this.toDto(saved),
     };
   }
 
-  listRequests(status?: VerificationStatus) {
-    const requests = Array.from(this.store.requests.values()).filter((item) =>
-      status ? item.status === status : true,
-    );
-
+  async listRequests(status?: VerificationStatus) {
+    const where = status ? ({ status } as any) : {};
+    const rows = await this.requests.find({
+      where,
+      order: { createdAt: 'DESC' as any },
+    });
     return {
-      total: requests.length,
-      data: requests,
+      total: rows.length,
+      data: rows.map((row) => this.toDto(row)),
     };
   }
 
-  approveRequest(
+  async approveRequest(
     requestId: string,
     dto: ApproveIdentityVerificationDto,
   ) {
@@ -69,29 +72,32 @@ export class IdentityVerificationService {
       throw new BadRequestException('adminId la bat buoc');
     }
 
-    const request = this.store.requests.get(requestId);
+    const request = await this.requests.findOneBy({ id: requestId } as any);
     if (!request) {
-      throw new NotFoundException('Khong tim thay yeu cau xac thuc');
+      throw new NotFoundException('Verification request not found');
     }
 
-    const user = this.getUserOrThrow(request.userId);
+    const user = await this.getUserOrThrow(request.userId);
 
     request.status = 'approved';
-    request.reviewedAt = new Date().toISOString();
+    request.reviewedAt = new Date();
     request.reviewedBy = dto.adminId.trim();
-    request.adminNote = dto.note?.trim() || 'Da phe duyet';
+    request.adminNote = dto.note?.trim() || 'Approved';
+    request.rejectionReason = null;
+    await this.requests.save(request);
 
     user.canSell = true;
     user.verificationStatus = 'approved';
     user.latestRequestId = request.id;
+    await this.users.save(user);
 
     return {
-      message: 'Da phe duyet xac thuc thanh cong',
-      data: request,
+      message: 'Verification approved successfully',
+      data: this.toDto(request),
     };
   }
 
-  rejectRequest(
+  async rejectRequest(
     requestId: string,
     dto: RejectIdentityVerificationDto,
   ) {
@@ -102,66 +108,78 @@ export class IdentityVerificationService {
       throw new BadRequestException('reason la bat buoc');
     }
 
-    const request = this.store.requests.get(requestId);
+    const request = await this.requests.findOneBy({ id: requestId } as any);
     if (!request) {
-      throw new NotFoundException('Khong tim thay yeu cau xac thuc');
+      throw new NotFoundException('Verification request not found');
     }
 
-    const user = this.getUserOrThrow(request.userId);
+    const user = await this.getUserOrThrow(request.userId);
 
     request.status = 'rejected';
-    request.reviewedAt = new Date().toISOString();
+    request.reviewedAt = new Date();
     request.reviewedBy = dto.adminId.trim();
     request.rejectionReason = dto.reason.trim();
+    request.adminNote = null;
+    await this.requests.save(request);
 
     user.canSell = false;
     user.verificationStatus = 'rejected';
     user.latestRequestId = request.id;
+    await this.users.save(user);
 
     return {
-      message: 'Da tu choi yeu cau xac thuc',
-      data: request,
+      message: 'Verification request rejected',
+      data: this.toDto(request),
     };
   }
 
-  getCanSellStatus(userId: string) {
-    const user = this.getUserOrThrow(userId);
+  async getCanSellStatus(userId: string) {
+    const user = await this.getUserOrThrow(userId);
 
     return {
       userId: user.id,
       fullName: user.fullName,
-      canSell: user.canSell,
-      verificationStatus: user.verificationStatus,
+      canSell: Boolean(user.canSell),
+      verificationStatus: (user.verificationStatus ?? 'none') as VerificationStatus,
       latestRequestId: user.latestRequestId ?? null,
       message: user.canSell
-        ? 'Da duoc xac thuc, co the dang ban xe'
-        : 'Chua duoc xac thuc, khong the dang ban xe',
+        ? 'User is verified and can post listings'
+        : 'User is not verified and cannot post listings',
     };
   }
 
-  listMockUsers() {
-    return {
-      total: this.store.users.size,
-      data: Array.from(this.store.users.values()),
-    };
-  }
-
-  private getUserOrThrow(userId: string): MockUser {
-    const user = this.store.users.get(userId);
+  private async getUserOrThrow(userId: string): Promise<UserEntity> {
+    const user = await this.users.findOneBy({ id: userId } as any);
     if (!user) {
-      throw new NotFoundException('Khong tim thay nguoi dung trong mock data');
+      throw new NotFoundException('User not found');
     }
     return user;
   }
 
-  private updateUserStatusAfterSubmit(user: MockUser, requestId: string) {
+  private async updateUserStatusAfterSubmit(user: UserEntity, requestId: string): Promise<void> {
     user.verificationStatus = 'pending_admin_review';
     user.canSell = false;
     user.latestRequestId = requestId;
+    await this.users.save(user);
   }
 
-  private mockAiCheck(): 'passed' {
-    // TODO: Tich hop AI service sau. Hien tai tam thoi AUTO PASS theo yeu cau.
+  private defaultAiCheckStatus(): 'passed' {
     return 'passed';
+  }
+
+  private toDto(request: IdentityVerificationRequestEntity): VerificationRequest {
+    return {
+      id: request.id,
+      userId: request.userId,
+      documentType: request.documentType,
+      idImageUrl: request.idImageUrl,
+      aiCheckStatus: request.aiCheckStatus,
+      status: request.status,
+      submittedAt: request.createdAt.toISOString(),
+      reviewedAt: request.reviewedAt?.toISOString(),
+      reviewedBy: request.reviewedBy ?? undefined,
+      adminNote: request.adminNote ?? undefined,
+      rejectionReason: request.rejectionReason ?? undefined,
+    };
   }
 }

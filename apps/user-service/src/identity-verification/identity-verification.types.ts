@@ -8,14 +8,6 @@ export type VerificationStatus =
 
 export type AiCheckStatus = 'pending' | 'passed' | 'failed';
 
-export interface MockUser {
-  id: string;
-  fullName: string;
-  canSell: boolean;
-  verificationStatus: VerificationStatus;
-  latestRequestId?: string;
-}
-
 export interface VerificationRequest {
   id: string;
   userId: string;

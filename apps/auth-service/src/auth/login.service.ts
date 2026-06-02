@@ -11,6 +11,7 @@ import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { UserOrmEntity } from '@car-marketplace/database';
 import { AuthSessionResponse, AuthSessionService } from './auth-session.service';
+import { RefreshTokenService } from './refresh-token.service';
 import { LoginDto } from './dto/login.dto';
 import { SmsNotificationService } from './sms-notification.service';
 
@@ -23,6 +24,7 @@ export class LoginService {
     @InjectRepository(UserOrmEntity)
     private readonly users: Repository<UserOrmEntity>,
     private readonly sessions: AuthSessionService,
+    private readonly refreshTokens: RefreshTokenService,
     private readonly sms: SmsNotificationService,
   ) {}
 
@@ -72,14 +74,25 @@ export class LoginService {
       });
     }
 
-    const match = await bcrypt.compare(dto.password, user.passwordHash);
+    const hash = user.passwordHash?.trim() ?? '';
+    if (!hash.startsWith('$2')) {
+      throw new UnauthorizedException({
+        code: 'INVALID_ACCOUNT',
+        message:
+          'Tài khoản chưa được thiết lập mật khẩu hợp lệ. Vui lòng đăng ký lại hoặc liên hệ quản trị.',
+      });
+    }
+
+    const match = await bcrypt.compare(dto.password, hash);
     if (!match) {
       await this.handleWrongPassword(user);
     }
 
     user.failedLoginAttempts = 0;
     user.loginLockedUntil = null;
-    return this.sessions.issueSession(user, userAgent);
+    const session = await this.sessions.issueSession(user, userAgent);
+    const refreshToken = await this.refreshTokens.issueRefreshToken(user.id);
+    return { ...session, refreshToken };
   }
 
   private async handleWrongPassword(user: UserOrmEntity): Promise<never> {

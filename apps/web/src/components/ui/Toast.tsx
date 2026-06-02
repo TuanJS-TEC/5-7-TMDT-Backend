@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { AppIcon, TOAST_ICON, type AppIconName } from '../icons';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -23,13 +24,6 @@ interface ToastContextValue {
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
-
-const icons: Record<ToastType, string> = {
-  success: '✓',
-  error:   '✕',
-  info:    'ℹ',
-  warning: '⚠',
-};
 
 const colorMap: Record<ToastType, string> = {
   success: 'border-l-emerald-500 bg-white text-emerald-900',
@@ -52,8 +46,8 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
         ${colorMap[toast.type]}
         ${toast.leaving ? 'animate-toast-out' : 'animate-toast-in'}`}
     >
-      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${iconColorMap[toast.type]}`}>
-        {icons[toast.type]}
+      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${iconColorMap[toast.type]}`}>
+        <AppIcon name={TOAST_ICON[toast.type] as AppIconName} size="sm" alt="" />
       </span>
       <p className="flex-1 text-sm font-medium leading-snug pt-0.5">{toast.message}</p>
       <button

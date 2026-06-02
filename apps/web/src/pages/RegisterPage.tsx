@@ -6,6 +6,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import { FormField } from '../components/ui/FormField';
 import { PageError } from '../components/ui/PageState';
+import { AppIcon, type AppIconName } from '../components/icons';
 
 const STEPS = ['Thông tin', 'Xác thực OTP'];
 
@@ -23,7 +24,7 @@ function StepIndicator({ current }: { current: number }) {
                 active ? 'bg-brand-600 border-brand-600 text-white scale-110 shadow-lg shadow-brand-500/25' :
                          'border-brand-200 text-muted bg-white'
               }`}>
-                {done ? '✓' : idx + 1}
+                {done ? <AppIcon name="priority" size="sm" alt="" className="brightness-0 invert" /> : idx + 1}
               </div>
               <span className={`text-xs font-medium whitespace-nowrap ${active ? 'text-brand-700' : done ? 'text-emerald-600' : 'text-muted'}`}>
                 {label}
@@ -108,16 +109,17 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-8 animate-fade-in">
-      <div className="w-full max-w-lg">
-        <div className="text-center mb-6">
-          <h1 className="font-display text-3xl font-bold text-brand-900">Tạo tài khoản</h1>
-          <p className="mt-2 text-sm text-muted">
-            Đã có tài khoản?{' '}
-            <Link to="/login" className="font-semibold text-brand-600 hover:underline">Đăng nhập</Link>
-          </p>
-        </div>
+    <div className="min-h-[80vh] py-8 animate-fade-in space-y-6">
+      <section className="rounded-3xl border border-brand-100 bg-gradient-to-br from-white via-brand-50/60 to-brand-100/40 p-5 md:p-7">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Create account</p>
+        <h1 className="mt-1 font-display text-3xl font-bold text-ink">Đăng ký tài khoản mới</h1>
+        <p className="mt-2 text-sm text-muted">
+          Đã có tài khoản?{' '}
+          <Link to="/login" className="font-semibold text-brand-600 hover:underline">Đăng nhập</Link>
+        </p>
+      </section>
 
+      <div className="mx-auto w-full max-w-lg">
         <div className="card p-8">
           <StepIndicator current={step} />
 
@@ -153,7 +155,7 @@ export function RegisterPage() {
                     aria-invalid={touched.password && !passwordValid}
                   />
                   <button type="button" tabIndex={-1} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink" onClick={() => setShowPwd(v => !v)}>
-                    {showPwd ? '🙈' : '👁'}
+                    <span className="text-xs font-semibold">{showPwd ? 'Ẩn' : 'Hiện'}</span>
                   </button>
                 </div>
               </FormField>
@@ -163,8 +165,8 @@ export function RegisterPage() {
                 <label className="block text-sm font-semibold text-ink mb-2">Loại tài khoản</label>
                 <div className="grid grid-cols-2 gap-3">
                   {([
-                    { value: 'personal', icon: '👤', title: 'Cá nhân', sub: 'Mua xe → Vai trò người mua' },
-                    { value: 'showroom', icon: '🏢', title: 'Showroom', sub: 'Bán xe → Vai trò người bán' },
+                    { value: 'personal', icon: 'layers' as AppIconName, title: 'Cá nhân', sub: 'Mua xe → Vai trò người mua' },
+                    { value: 'showroom', icon: 'carDealer' as AppIconName, title: 'Showroom', sub: 'Bán xe → Vai trò người bán' },
                   ] as const).map((opt) => (
                     <button
                       key={opt.value}
@@ -176,7 +178,7 @@ export function RegisterPage() {
                           : 'border-brand-100 hover:border-brand-300'
                       }`}
                     >
-                      <span className="text-2xl">{opt.icon}</span>
+                      <AppIcon name={opt.icon} size="lg" alt="" />
                       <span className="font-semibold text-sm text-ink">{opt.title}</span>
                       <span className="text-xs text-muted leading-tight">{opt.sub}</span>
                     </button>
@@ -195,7 +197,10 @@ export function RegisterPage() {
             <form onSubmit={verify} className="space-y-5 animate-slide-up" noValidate>
               {info && (
                 <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
-                  📱 {info}
+                  <span className="inline-flex items-start gap-2">
+                    <AppIcon name="priority" size="sm" alt="" className="mt-0.5 shrink-0" />
+                    {info}
+                  </span>
                 </div>
               )}
               {error && <PageError message={error} />}
@@ -228,7 +233,14 @@ export function RegisterPage() {
               </FormField>
 
               <button type="submit" disabled={loading || !otpValid} className="btn btn-primary w-full py-3 text-base">
-                {loading ? <><Spinner size="sm" className="text-white" /> Đang xác thực…</> : '✓ Hoàn tất đăng ký'}
+                {loading ? (
+                  <><Spinner size="sm" className="text-white" /> Đang xác thực…</>
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    <AppIcon name="priority" size="sm" alt="" className="brightness-0 invert" />
+                    Hoàn tất đăng ký
+                  </span>
+                )}
               </button>
 
               <button
@@ -242,6 +254,24 @@ export function RegisterPage() {
           )}
         </div>
       </div>
+
+      <section className="grid gap-4 rounded-3xl border border-brand-100 bg-white p-5 md:grid-cols-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Step 1</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Điền thông tin</h3>
+          <p className="mt-2 text-sm text-muted">Nhập họ tên, số điện thoại, mật khẩu và chọn loại tài khoản phù hợp.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Step 2</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Xác thực OTP</h3>
+          <p className="mt-2 text-sm text-muted">Nhập mã OTP để hoàn tất đăng ký và kích hoạt tài khoản ngay.</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted">Step 3</p>
+          <h3 className="mt-1 font-display text-lg font-semibold text-ink">Bắt đầu sử dụng</h3>
+          <p className="mt-2 text-sm text-muted">Đăng nhập để tìm xe, lưu xe yêu thích hoặc đăng bán xe của bạn.</p>
+        </div>
+      </section>
     </div>
   );
 }

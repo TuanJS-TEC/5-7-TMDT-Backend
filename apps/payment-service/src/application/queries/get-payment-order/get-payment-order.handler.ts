@@ -7,6 +7,7 @@ import type { PaymentOrderRecord } from '../../../infrastructure/persistence/pay
 import { DemoWalletService } from '../../../infrastructure/wallet/demo-wallet.service';
 import { DemoAtmGatewayService } from '../../../infrastructure/atm/demo-atm-gateway.service';
 import { RefundRepository } from '../../../infrastructure/persistence/refund.repository';
+import { VietQrService } from '../../../infrastructure/vietqr/vietqr.service';
 
 export type PaymentOrderView = {
   orderId: string;
@@ -67,6 +68,7 @@ export class GetPaymentOrderHandler
     private readonly demoWallet: DemoWalletService,
     private readonly demoAtm: DemoAtmGatewayService,
     private readonly refundRepo: RefundRepository,
+    private readonly vietQr: VietQrService,
   ) {}
 
   async execute(query: GetPaymentOrderQuery): Promise<PaymentOrderView> {
@@ -127,7 +129,11 @@ export class GetPaymentOrderHandler
       vietQr:
         order.paymentMethod === 'qr_banking'
           ? {
-              imageUrl: order.vietQrImageUrl,
+              imageUrl:
+                order.vietQrImageUrl ??
+                (this.vietQr.useDemoImage()
+                  ? this.vietQr.getDemoImageUrl()
+                  : undefined),
               transferContent: order.transferContent ?? order.id,
               expiresAt: order.vietQrExpiresAt?.toISOString(),
               expired: qrExpired,

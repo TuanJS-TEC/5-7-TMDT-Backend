@@ -10,7 +10,12 @@ import { ListingDetailPage } from './pages/ListingDetailPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { SellerOrdersPage } from './pages/SellerOrdersPage';
 import { CreateListingPage } from './pages/CreateListingPage';
+import { EditListingPage } from './pages/EditListingPage';
 import { AdminModerationPage } from './pages/AdminModerationPage';
+import { AdminRevenueDashboardPage } from './pages/AdminRevenueDashboardPage';
+import { AdminSoldListingsPage } from './pages/AdminSoldListingsPage';
+import { AdminCarMakesPage } from './pages/AdminCarMakesPage';
+import { SellerMyListingsPage } from './pages/SellerMyListingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { UserProfilePage } from './pages/UserProfilePage';
 
@@ -34,6 +39,11 @@ export function App() {
               <FavoritesPage />
             </RequireAuth>
           } />
+          <Route path="seller/listings" element={
+            <RequireAuth roles={['seller']}>
+              <SellerMyListingsPage />
+            </RequireAuth>
+          } />
           <Route path="seller/orders" element={
             <RequireAuth roles={['seller']}>
               <SellerOrdersPage />
@@ -44,9 +54,29 @@ export function App() {
               <CreateListingPage />
             </RequireAuth>
           } />
+          <Route path="seller/listing/:id/edit" element={
+            <RequireAuth roles={['seller']}>
+              <EditListingPage />
+            </RequireAuth>
+          } />
           <Route path="admin/moderation" element={
             <RequireAuth roles={['admin']}>
               <AdminModerationPage />
+            </RequireAuth>
+          } />
+          <Route path="admin/sold" element={
+            <RequireAuth roles={['admin']}>
+              <AdminSoldListingsPage />
+            </RequireAuth>
+          } />
+          <Route path="admin/dashboard" element={
+            <RequireAuth roles={['admin']}>
+              <AdminRevenueDashboardPage />
+            </RequireAuth>
+          } />
+          <Route path="admin/car-makes" element={
+            <RequireAuth roles={['admin']}>
+              <AdminCarMakesPage />
             </RequireAuth>
           } />
 

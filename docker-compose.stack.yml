@@ -67,6 +67,16 @@ services:
     image: "car-marketplace-runner:local"
     working_dir: /app/apps/auth-service
     command: [ "node", "dist/main.js" ]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"require('net').connect({port:3001,host:'127.0.0.1'},()=>process.exit(0)).on('error',()=>process.exit(1))\"",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
     environment:
       PORT: "3001"
       POSTGRES_HOST: postgres
@@ -79,8 +89,12 @@ services:
       JWT_SECRET: "docker-dev-jwt-secret-change-me"
       JWT_EXPIRES_SEC: "3600"
       INTERNAL_API_KEY: "docker-internal-api-key"
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
+      # UC11 đăng ký/OTP dùng Postgres (otp_challenges) — không bắt buộc Redis
+      SKIP_REDIS: "true"
+      SUPERADMIN_BOOTSTRAP_ENABLED: "true"
+      SUPERADMIN_PHONE: "0900000009"
+      SUPERADMIN_PASSWORD: "SuperAdmin@123"
+      SUPERADMIN_FULL_NAME: "System Superadmin"
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,6 +106,16 @@ services:
     image: "car-marketplace-runner:local"
     working_dir: /app/apps/listing-service
     command: [ "node", "dist/main.js" ]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"require('net').connect({port:3002,host:'127.0.0.1'},()=>process.exit(0)).on('error',()=>process.exit(1))\"",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
     environment:
       PORT: "3002"
       POSTGRES_HOST: postgres
@@ -103,7 +127,12 @@ services:
       TYPEORM_LOGGING: "false"
       AUTH_SERVICE_URL: http://auth-service:3001
       INTERNAL_API_KEY: "docker-internal-api-key"
+      JWT_SECRET: "docker-dev-jwt-secret-change-me"
+      SKIP_AI_IMAGE_VALIDATION: "true"
       RABBITMQ_URL: amqp://marketplace:marketplace@rabbitmq:5672
+      NOTIFICATION_ADMIN_USER_IDS: ""
+    volumes:
+      - listing_uploads:/app/apps/listing-service/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -130,6 +159,11 @@ services:
       TYPEORM_LOGGING: "false"
       JWT_SECRET: "docker-dev-jwt-secret-change-me"
       RABBITMQ_URL: amqp://marketplace:marketplace@rabbitmq:5672
+      PAYMENT_WEBHOOK_SECRET: "docker-dev-payment-webhook-secret"
+      PAYMENT_DEMO_MODE: "true"
+      VIETQR_USE_DEMO_IMAGE: "true"
+      VIETQR_BANK_NAME: "Ngân hàng demo Car Marketplace"
+      VIETQR_ACCOUNT_NAME: "CAR MARKETPLACE DEMO"
     depends_on:
       postgres:
         condition: service_healthy
@@ -209,6 +243,16 @@ services:
       target: runner
     working_dir: /app/apps/api-gateway
     command: [ "node", "dist/main.js" ]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"require('net').connect({port:3000,host:'127.0.0.1'},()=>process.exit(0)).on('error',()=>process.exit(1))\"",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     # Nếu máy đã chạy gateway local trên 3000: trong .env đặt API_GATEWAY_PUBLISH_PORT=3003
     ports:
       - "${API_GATEWAY_PUBLISH_PORT:-3000}:3000"
@@ -217,10 +261,14 @@ services:
       LISTING_SERVICE_URL: http://listing-service:3002
       AUTH_SERVICE_URL: http://auth-service:3001
       PAYMENT_SERVICE_URL: http://payment-service:3004
+      ADMIN_SERVICE_URL: http://admin-service:3006
     depends_on:
-      - auth-service
-      - listing-service
-      - payment-service
+      auth-service:
+        condition: service_healthy
+      listing-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_started
     restart: unless-stopped
     networks:
       - stack
@@ -234,10 +282,12 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - stack
 
 volumes:
   pgdata_stack: {}
+  listing_uploads: {}

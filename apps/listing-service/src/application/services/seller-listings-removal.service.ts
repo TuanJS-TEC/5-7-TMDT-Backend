@@ -37,7 +37,7 @@ export class SellerListingsRemovalService {
     sellerId: string,
     input: RemoveAllActiveListingsInput,
   ): Promise<RemoveAllActiveListingsResult> {
-    const listingIds = this.listingWriteRepository.softRemoveAllActiveBySellerId(
+    const listingIds = await this.listingWriteRepository.softRemoveAllActiveBySellerId(
       sellerId,
       {
         moderatorId: input.moderatorId,

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { AppIcon, PRICE_ICON } from './icons';
 
 function roleLabel(role: string) {
   if (role === 'admin')  return 'Quản trị';
@@ -15,7 +16,7 @@ function roleBadgeClass(role: string) {
 }
 
 function navLinkClass(isActive: boolean, isAdmin = false) {
-  const base = 'relative rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ';
+  const base = 'relative rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 ';
   if (isAdmin) {
     return base + (isActive
       ? 'bg-amber-100 text-amber-900'
@@ -80,29 +81,39 @@ export function Shell() {
 
           {/* Logo */}
           <Link to="/" className="group flex items-center gap-2.5 shrink-0" onClick={() => setMobileOpen(false)}>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 font-display text-lg font-bold text-white shadow-md shadow-brand-500/30 transition-transform group-hover:scale-105">
-              C
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-md shadow-brand-500/30 transition-transform group-hover:scale-105">
+              <AppIcon name="racing" size="sm" alt="Car Marketplace" className="brightness-0 invert" />
             </span>
             <div className="hidden sm:block leading-tight">
               <span className="font-display text-[1.05rem] font-bold tracking-tight text-brand-900">Car Marketplace</span>
-              <span className="block text-[0.7rem] text-muted">Sàn ô tô đã kiểm duyệt</span>
+              <span className="block text-[0.7rem] text-muted">Buy Sell Cars in one place</span>
             </div>
           </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1">
-            <NavLink to="/" className={({ isActive }) => navLinkClass(isActive)} end>Xe đang bán</NavLink>
+            <NavLink to="/" className={({ isActive }) => navLinkClass(isActive)} end>Find a car</NavLink>
             {user && (
               <>
-                <NavLink to="/favorites" className={({ isActive }) => navLinkClass(isActive)}>♥ Yêu thích</NavLink>
+                <NavLink to="/favorites" className={({ isActive }) => navLinkClass(isActive)}>Saved</NavLink>
                 {user.role === 'seller' && (
                   <>
-                    <NavLink to="/seller/orders"      className={({ isActive }) => navLinkClass(isActive)}>Đơn thanh toán</NavLink>
-                    <NavLink to="/seller/listing/new" className={({ isActive }) => navLinkClass(isActive)}>+ Đăng tin</NavLink>
+                    <NavLink to="/seller/listings"    className={({ isActive }) => navLinkClass(isActive)}>Tin của tôi</NavLink>
+                    <NavLink to="/seller/orders"      className={({ isActive }) => navLinkClass(isActive)}>
+                      <span className="inline-flex items-center gap-1.5">
+                        <AppIcon name={PRICE_ICON} size="xs" alt="" /> Payments
+                      </span>
+                    </NavLink>
+                    <NavLink to="/seller/listing/new" className={({ isActive }) => navLinkClass(isActive)}>Sell my car</NavLink>
                   </>
                 )}
                 {user.role === 'admin' && (
-                  <NavLink to="/admin/moderation" className={({ isActive }) => navLinkClass(isActive, true)}>🛡 Kiểm duyệt</NavLink>
+                  <>
+                    <NavLink to="/admin/dashboard" className={({ isActive }) => navLinkClass(isActive, true)}>Revenue</NavLink>
+                    <NavLink to="/admin/moderation" className={({ isActive }) => navLinkClass(isActive, true)}>Moderation</NavLink>
+                    <NavLink to="/admin/car-makes" className={({ isActive }) => navLinkClass(isActive, true)}>Car makes</NavLink>
+                    <NavLink to="/admin/sold" className={({ isActive }) => navLinkClass(isActive, true)}>Đã bán</NavLink>
+                  </>
                 )}
               </>
             )}
@@ -150,20 +161,30 @@ export function Shell() {
         {mobileOpen && (
           <div id="mobile-main-menu" className="md:hidden border-t border-brand-100/60 bg-white/95 backdrop-blur-md px-4 pb-4 pt-3 animate-slide-down">
             <nav className="flex flex-col gap-1">
-              <NavLink to="/" className={({ isActive }) => navLinkClass(isActive) + ' block'} end onClick={() => setMobileOpen(false)}>🚗 Xe đang bán</NavLink>
+              <NavLink to="/" className={({ isActive }) => navLinkClass(isActive) + ' block'} end onClick={() => setMobileOpen(false)}>Find a car</NavLink>
               {user && (
                 <>
-                  <NavLink to="/favorites"          className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>♥ Yêu thích</NavLink>
+                  <NavLink to="/favorites"          className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>Saved</NavLink>
                   {user.role === 'seller' && (
                     <>
-                      <NavLink to="/seller/orders"      className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>📦 Đơn thanh toán</NavLink>
-                      <NavLink to="/seller/listing/new" className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>+ Đăng tin bán xe</NavLink>
+                      <NavLink to="/seller/listings"    className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>Tin của tôi</NavLink>
+                      <NavLink to="/seller/orders"      className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>
+                        <span className="inline-flex items-center gap-1.5">
+                          <AppIcon name={PRICE_ICON} size="xs" alt="" /> Payments
+                        </span>
+                      </NavLink>
+                      <NavLink to="/seller/listing/new" className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>Sell my car</NavLink>
                     </>
                   )}
                   {user.role === 'admin' && (
-                    <NavLink to="/admin/moderation" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>🛡 Kiểm duyệt</NavLink>
+                    <>
+                      <NavLink to="/admin/dashboard" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Revenue</NavLink>
+                      <NavLink to="/admin/moderation" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Moderation</NavLink>
+                      <NavLink to="/admin/car-makes" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Car makes</NavLink>
+                      <NavLink to="/admin/sold" className={({ isActive }) => navLinkClass(isActive, true) + ' block'} onClick={() => setMobileOpen(false)}>Đã bán</NavLink>
+                    </>
                   )}
-                  <NavLink to="/profile" className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>👤 Tài khoản</NavLink>
+                  <NavLink to="/profile" className={({ isActive }) => navLinkClass(isActive) + ' block'} onClick={() => setMobileOpen(false)}>My account</NavLink>
                 </>
               )}
             </nav>
@@ -196,38 +217,47 @@ export function Shell() {
       </main>
 
       {/* ── Footer ───────────────────────────────────── */}
-      <footer className="mt-12 border-t border-brand-100/60 bg-white/60">
+      <footer className="mt-12 border-t border-brand-100/60 bg-white/70">
         <div className="mx-auto max-w-7xl px-4 py-10">
-          <div className="grid gap-8 sm:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-4">
             <div>
               <Link to="/" className="flex items-center gap-2 w-fit">
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 font-display text-base font-bold text-white shadow">C</span>
                 <span className="font-display font-bold text-brand-900">Car Marketplace</span>
               </Link>
-              <p className="mt-3 text-sm text-muted leading-relaxed">Nền tảng mua bán ô tô đã qua sử dụng — đã kiểm duyệt, minh bạch, an toàn.</p>
+              <p className="mt-3 text-sm text-muted leading-relaxed">Nen tang mua ban o to da kiem duyet voi giao dien theo huong marketplace hien dai.</p>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-ink mb-3">Tính năng</h3>
+              <h3 className="text-sm font-semibold text-ink mb-3">Buy & Sell</h3>
               <ul className="space-y-2 text-sm text-muted">
-                <li><Link to="/"                    className="hover:text-brand-700 transition-colors">Tìm xe</Link></li>
-                <li><Link to="/register"            className="hover:text-brand-700 transition-colors">Đăng ký người bán</Link></li>
-                <li><Link to="/seller/listing/new"  className="hover:text-brand-700 transition-colors">Đăng tin bán xe</Link></li>
-                <li><Link to="/favorites"           className="hover:text-brand-700 transition-colors">Xe yêu thích</Link></li>
+                <li><Link to="/"                    className="hover:text-brand-700 transition-colors">Find a car</Link></li>
+                <li><Link to="/register"            className="hover:text-brand-700 transition-colors">Create account</Link></li>
+                <li><Link to="/seller/listing/new"  className="hover:text-brand-700 transition-colors">Sell my car</Link></li>
+                <li><Link to="/favorites"           className="hover:text-brand-700 transition-colors">Saved listings</Link></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-ink mb-3">Công nghệ</h3>
+              <h3 className="text-sm font-semibold text-ink mb-3">Tools</h3>
               <ul className="space-y-2 text-sm text-muted">
-                <li>API Gateway · NestJS Microservices</li>
-                <li>Auth · Listing · Payment services</li>
-                <li>PostgreSQL · Redis · RabbitMQ</li>
-                <li>React 19 + Vite + TailwindCSS v4</li>
+                <li>Car chooser by budget</li>
+                <li>Filter by fuel and gearbox</li>
+                <li>Saved cars and profile</li>
+                <li>Seller payments tracking</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-ink mb-3">Platform</h3>
+              <ul className="space-y-2 text-sm text-muted">
+                <li>API Gateway and microservices</li>
+                <li>Auth Listing Payment services</li>
+                <li>PostgreSQL Redis RabbitMQ</li>
+                <li>React 19 Vite TailwindCSS v4</li>
               </ul>
             </div>
           </div>
           <div className="mt-8 border-t border-brand-100 pt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
-            <span>© 2025 Car Marketplace — Demo microservices platform</span>
-            <span>Dữ liệu demo · Không phải sàn giao dịch thực</span>
+            <span>© 2026 Car Marketplace</span>
+            <span>Demo data only · Not a live trading platform</span>
           </div>
         </div>
       </footer>

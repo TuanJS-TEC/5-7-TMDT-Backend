@@ -1,0 +1,17 @@
+{
+  "ios": {
+    "bundleId": "com.carmarketplace.app",
+    "appName": "Car Marketplace",
+    "subtitle": "Mua bán ô tô cũ",
+    "privacyPolicyUrl": "https://example.com/privacy",
+    "category": "SHOPPING"
+  },
+  "android": {
+    "package": "com.carmarketplace.app",
+    "title": "Car Marketplace",
+    "shortDescription": "Sàn giao dịch ô tô cũ — tìm xe, đăng tin, thanh toán gói tin.",
+    "fullDescription": "Car Marketplace kết nối người mua và người bán xe đã qua sử dụng. Duyệt tin, lưu yêu thích, đăng tin showroom, thanh toán VietQR.",
+    "privacyPolicyUrl": "https://example.com/privacy",
+    "category": "AUTO_AND_VEHICLES"
+  }
+}

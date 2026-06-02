@@ -6,6 +6,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { useToast } from '../components/ui/Toast';
 import { FormField } from '../components/ui/FormField';
 import { PageError } from '../components/ui/PageState';
+import { AppIcon } from '../components/icons';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -36,7 +37,7 @@ export function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      await login(phoneNormalized, password);
+      await login(phoneNormalized.replace(/\s+/g, ''), password);
       toast('Đăng nhập thành công', 'success');
       navigate(from, { replace: true });
     } catch (err) {
@@ -48,23 +49,33 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center animate-fade-in">
-      <div className="w-full max-w-4xl overflow-hidden rounded-3xl shadow-xl shadow-brand-900/10 border border-brand-100 grid lg:grid-cols-2">
+    <div className="min-h-[80vh] animate-fade-in space-y-6">
+      <section className="rounded-3xl border border-brand-100 bg-gradient-to-br from-white via-brand-50/60 to-brand-100/40 p-5 md:p-7">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Welcome back</p>
+        <h1 className="mt-1 font-display text-3xl font-bold text-ink">Đăng nhập tài khoản</h1>
+        <p className="mt-2 text-sm text-muted">Tiếp tục hành trình tìm xe, lưu xe yêu thích và liên hệ người bán.</p>
+      </section>
+
+      <div className="w-full overflow-hidden rounded-3xl shadow-xl shadow-brand-900/10 border border-brand-100 grid lg:grid-cols-2">
         {/* ── Left: Brand panel ── */}
         <div className="relative hidden lg:flex flex-col justify-between bg-gradient-to-br from-brand-700 via-brand-800 to-brand-900 p-10 text-white overflow-hidden">
           <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-brand-400/20 blur-2xl" />
           <div className="relative">
             <Link to="/" className="flex items-center gap-2.5">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 font-display text-xl font-bold">C</span>
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+                <AppIcon name="racing" size="md" alt="Car Marketplace" className="brightness-0 invert" />
+              </span>
               <span className="font-display text-xl font-bold">Car Marketplace</span>
             </Link>
           </div>
           <div className="relative">
-            <div className="text-5xl mb-6">🚗</div>
+            <div className="mb-6">
+              <AppIcon name="racing" size="2xl" alt="" className="brightness-0 invert opacity-95" />
+            </div>
             <h2 className="font-display text-2xl font-bold leading-snug">
-              Chào mừng trở lại!<br />
-              <span className="text-brand-200">Đăng nhập để tiếp tục</span>
+              Find, Buy, Sell<br />
+              <span className="text-brand-200">all in one place</span>
             </h2>
             <p className="mt-3 text-sm text-white/65 leading-relaxed">
               Khám phá hàng nghìn xe đã qua sử dụng, lưu yêu thích, và liên hệ người bán ngay hôm nay.
@@ -72,13 +83,15 @@ export function LoginPage() {
           </div>
           <div className="relative flex flex-col gap-3">
             {[
-              { icon: '✓', text: 'Tin đăng đã được kiểm duyệt' },
-              { icon: '✓', text: 'Thông tin người bán xác thực' },
-              { icon: '✓', text: 'Giao dịch an toàn, minh bạch' },
-            ].map((item) => (
-              <div key={item.text} className="flex items-center gap-2 text-sm text-white/80">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/25 text-emerald-300 text-xs font-bold">{item.icon}</span>
-                {item.text}
+              'Tin đăng đã được kiểm duyệt',
+              'Thông tin người bán xác thực',
+              'Giao dịch an toàn, minh bạch',
+            ].map((text) => (
+              <div key={text} className="flex items-center gap-2 text-sm text-white/80">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/25">
+                  <AppIcon name="priority" size="xs" alt="" className="brightness-0 invert" />
+                </span>
+                {text}
               </div>
             ))}
           </div>
@@ -142,7 +155,7 @@ export function LoginPage() {
                     tabIndex={-1}
                     aria-label={showPwd ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                   >
-                    {showPwd ? '🙈' : '👁'}
+                    <span className="text-xs font-semibold">{showPwd ? 'Ẩn' : 'Hiện'}</span>
                   </button>
                 </div>
               </FormField>
@@ -159,7 +172,7 @@ export function LoginPage() {
             <div className="mt-8 rounded-xl border border-brand-100 bg-brand-50/50 p-3">
               <p className="text-xs text-center text-muted font-medium">Demo accounts</p>
               <div className="mt-2 space-y-1 text-xs text-muted text-center">
-                <p>👤 Người mua · 👔 Người bán (showroom) · 🛡 Admin</p>
+                <p>Người mua · Người bán (showroom) · Admin</p>
                 <p className="text-brand-600">Đăng ký tài khoản mới để thử nghiệm</p>
               </div>
             </div>

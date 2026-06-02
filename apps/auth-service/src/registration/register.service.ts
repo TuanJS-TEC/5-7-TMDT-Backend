@@ -12,6 +12,7 @@ import {
   UserRole,
 } from '@car-marketplace/database';
 import { AuthSessionService } from '../auth/auth-session.service';
+import { RefreshTokenService } from '../auth/refresh-token.service';
 import { OtpChallengeService } from '../otp/otp-challenge.service';
 import { PendingRegistrationOrmEntity } from './pending-registration.orm.entity';
 import { RegisterRequestOtpDto } from './dto/register-request-otp.dto';
@@ -33,6 +34,7 @@ export class RegisterService {
     private readonly pending: Repository<PendingRegistrationOrmEntity>,
     private readonly dataSource: DataSource,
     private readonly sessions: AuthSessionService,
+    private readonly refreshTokens: RefreshTokenService,
     private readonly otp: OtpChallengeService,
   ) {}
 
@@ -158,9 +160,11 @@ export class RegisterService {
       return u;
     });
 
-    return this.sessions.issueSession(user, userAgent, {
+    const session = await this.sessions.issueSession(user, userAgent, {
       welcomeMessage: `Chào mừng ${user.fullName} đến với sàn xe!`,
     });
+    const refreshToken = await this.refreshTokens.issueRefreshToken(user.id);
+    return { ...session, refreshToken };
   }
 
   private mapAccountToRole(accountType: UserAccountType): {
