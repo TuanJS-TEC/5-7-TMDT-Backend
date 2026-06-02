@@ -27,20 +27,20 @@ export default function AdminModerationScreen() {
   const [reason, setReason] = useState('');
   const [modifyId, setModifyId] = useState<string | null>(null);
   const [modifyDetails, setModifyDetails] = useState('');
-
-  if (!user || user.role !== 'admin') return <Redirect href="/" />;
+  const isAdmin = !!user && user.role === 'admin';
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin-pending'],
     queryFn: () =>
       api<PendingResult>('/listings/admin/moderation/pending?page=1&limit=50'),
+    enabled: isAdmin,
   });
 
   const approve = useMutation({
     mutationFn: (id: string) =>
       api(`/listings/admin/moderation/${id}/approve`, {
         method: 'PATCH',
-        body: JSON.stringify({ moderatorId: user.id }),
+        body: JSON.stringify({ moderatorId: user!.id }),
       }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin-pending'] }),
   });
@@ -49,7 +49,7 @@ export default function AdminModerationScreen() {
     mutationFn: () =>
       api(`/listings/admin/moderation/${rejectId}/reject`, {
         method: 'PATCH',
-        body: JSON.stringify({ moderatorId: user.id, reason: reason.trim() }),
+        body: JSON.stringify({ moderatorId: user!.id, reason: reason.trim() }),
       }),
     onSuccess: () => {
       setRejectId(null);
@@ -62,7 +62,7 @@ export default function AdminModerationScreen() {
     mutationFn: () =>
       api(`/listings/admin/moderation/${modifyId}/request-modification`, {
         method: 'PATCH',
-        body: JSON.stringify({ moderatorId: user.id, details: modifyDetails.trim() }),
+        body: JSON.stringify({ moderatorId: user!.id, details: modifyDetails.trim() }),
       }),
     onSuccess: () => {
       setModifyId(null);
@@ -71,6 +71,7 @@ export default function AdminModerationScreen() {
     },
   });
 
+  if (!isAdmin) return <Redirect href="/" />;
   if (isLoading) return <PageLoading />;
   if (isError) {
     return (

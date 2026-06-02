@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { getItem } from '../lib/storage';
 import {
   api,
   clearSession,
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const raw = await SecureStore.getItemAsync(STORAGE_USER);
+        const raw = await getItem(STORAGE_USER);
         if (raw) {
           const parsed = JSON.parse(raw) as SessionUser;
           if (!cancelled) setUser(parsed);

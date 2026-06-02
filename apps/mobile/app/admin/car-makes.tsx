@@ -25,12 +25,12 @@ export default function AdminCarMakesScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
-
-  if (!user || user.role !== 'admin') return <Redirect href="/" />;
+  const isAdmin = !!user && user.role === 'admin';
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-car-makes'],
     queryFn: () => api<{ items: CarMake[] }>('/listings/admin/car-makes'),
+    enabled: isAdmin,
   });
 
   const create = useMutation({
@@ -45,6 +45,7 @@ export default function AdminCarMakesScreen() {
     },
   });
 
+  if (!isAdmin) return <Redirect href="/" />;
   if (isLoading) return <PageLoading />;
 
   return (

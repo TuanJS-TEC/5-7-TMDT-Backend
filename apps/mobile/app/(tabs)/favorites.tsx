@@ -10,13 +10,15 @@ import { colors } from '../../src/theme/colors';
 
 export default function FavoritesScreen() {
   const { user } = useAuth();
-  if (!user) return <Redirect href="/(auth)/login" />;
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['favorites', user.id],
+    queryKey: ['favorites', user?.id],
     queryFn: () =>
-      api<ListingDto[]>(`/listings/favorites?userId=${encodeURIComponent(user.id)}`),
+      api<ListingDto[]>(`/listings/favorites?userId=${encodeURIComponent(user!.id)}`),
+    enabled: !!user,
   });
+
+  if (!user) return <Redirect href="/(auth)/login" />;
 
   if (isLoading) return <PageLoading label="Đang tải yêu thích…" />;
   if (isError) {

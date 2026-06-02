@@ -10,13 +10,15 @@ import { colors } from '../../src/theme/colors';
 
 export default function AdminDashboardScreen() {
   const { user } = useAuth();
-  if (!user || user.role !== 'admin') return <Redirect href="/" />;
+  const isAdmin = !!user && user.role === 'admin';
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['admin-revenue'],
     queryFn: () => api<RevenueDashboardDto>('/admin/revenue/dashboard'),
+    enabled: isAdmin,
   });
 
+  if (!isAdmin) return <Redirect href="/" />;
   if (isLoading) return <PageLoading />;
   if (isError) {
     return <PageError message={error instanceof Error ? error.message : 'Lỗi'} />;

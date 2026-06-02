@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -35,16 +35,22 @@ function PressableChip({
 
 export default function HomeScreen() {
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [make, setMake] = useState('');
 
-  const queryKey = ['listings', search, make];
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const queryKey = ['listings', debouncedSearch, make];
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useQuery({
     queryKey,
     queryFn: async () => {
       const params = new URLSearchParams({ page: '1', limit: '20', status: 'approved' });
       if (make) params.set('make', make);
-      if (search.trim()) params.set('search', search.trim());
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
       return api<ListingListResult>(`/listings?${params}`);
     },
   });
@@ -123,7 +129,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: 8,
   },
-  chips: { maxHeight: 40, marginBottom: 8 },
+  chips: { height: 40, marginBottom: 8 },
   chip: {
     marginRight: 8,
     paddingHorizontal: 12,

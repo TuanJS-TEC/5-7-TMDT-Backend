@@ -11,14 +11,12 @@ import { colors } from '../../src/theme/colors';
 export default function SellerListingsScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-
-  if (!user || user.role !== 'seller') {
-    return <Redirect href="/(auth)/login" />;
-  }
+  const isSeller = !!user && user.role === 'seller';
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['seller-listings'],
     queryFn: () => api<ListingDto[]>('/listings/me'),
+    enabled: isSeller,
   });
 
   const markSold = useMutation({
@@ -31,6 +29,10 @@ export default function SellerListingsScreen() {
     mutationFn: (id: string) => api(`/listings/${id}`, { method: 'DELETE' }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['seller-listings'] }),
   });
+
+  if (!isSeller) {
+    return <Redirect href="/(auth)/login" />;
+  }
 
   if (isLoading) return <PageLoading />;
   if (isError) {
@@ -66,7 +68,7 @@ export default function SellerListingsScreen() {
               <Text style={styles.warn}>Cần chỉnh: {item.modificationRequestDetails}</Text>
             ) : null}
             <View style={styles.actions}>
-              {(item.status === 'pending' || item.modificationRequestDetails) && (
+              {(item.status === 'pending' || item.status === 'modification_requested' || item.modificationRequestDetails) && (
                 <Link href={`/seller/edit/${item.id}`} asChild>
                   <Pressable style={styles.actionBtn}>
                     <Text style={styles.actionText}>Sửa</Text>
