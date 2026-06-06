@@ -4,6 +4,7 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -82,16 +83,21 @@ export default function HomeScreen() {
         onChangeText={setSearch}
         returnKeyType="search"
       />
-      <FlatList
+      <ScrollView
         horizontal
-        data={['', ...makes]}
-        keyExtractor={(item) => item || 'all'}
         showsHorizontalScrollIndicator={false}
-        style={styles.chips}
-        renderItem={({ item }) => (
-          <PressableChip label={item || 'Tất cả'} active={make === item} onPress={() => setMake(item)} />
-        )}
-      />
+        style={styles.chipsScroll}
+        contentContainerStyle={styles.chipsContent}
+      >
+        {['', ...makes].map((item) => (
+          <PressableChip
+            key={item || 'all'}
+            label={item || 'Tất cả'}
+            active={make === item}
+            onPress={() => setMake(item)}
+          />
+        ))}
+      </ScrollView>
       {isError ? (
         <PageError
           message={error instanceof Error ? error.message : 'Lỗi tải danh sách'}
@@ -129,20 +135,38 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: 8,
   },
-  chips: { height: 40, marginBottom: 8 },
+  chipsScroll: { marginBottom: 15 },
+  chipsContent: { flexDirection: 'row', alignItems: 'center' },
   chip: {
-    marginRight: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    width: 100,
+    height: 80,
+
+    marginRight: 10,
     borderRadius: 20,
+
+    justifyContent: 'center',
+    alignItems: 'center',
+
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    overflow: 'hidden',
   },
-  chipActive: { backgroundColor: colors.brand600, borderColor: colors.brand600 },
-  chipText: { color: colors.muted, fontSize: 13 },
-  chipTextActive: { color: '#fff', fontWeight: '600' },
+  chipActive: {
+    backgroundColor: colors.brand600,
+    borderColor: colors.brand600,
+  },
+
+  chipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.muted,
+  },
+
+  chipTextActive: {
+    fontSize: 14,      
+    fontWeight: '500', 
+    color: '#fff',
+  },
   list: { paddingBottom: 24 },
   count: { color: colors.muted, marginBottom: 8, fontSize: 13 },
   empty: { textAlign: 'center', color: colors.muted, marginTop: 40 },
