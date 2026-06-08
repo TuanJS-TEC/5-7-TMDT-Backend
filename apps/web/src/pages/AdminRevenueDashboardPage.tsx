@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client';
 import { Spinner } from '../components/ui/Spinner';
 import { PageError } from '../components/ui/PageState';
 import { AppIcon, PRICE_ICON } from '../components/icons';
+import { TopSellersChart } from '../components/TopSellersChart';
 
 interface RecentTransaction {
   id: string;
@@ -142,6 +143,8 @@ export function AdminRevenueDashboardPage() {
           </div>
         </div>
       </div>
+
+      <TopSellersChart />
 
       <div className="card overflow-hidden">
         <div className="border-b border-brand-100 px-4 py-3">
